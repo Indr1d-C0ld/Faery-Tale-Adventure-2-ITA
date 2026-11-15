@@ -1,0 +1,37 @@
+From 57ca6e098a22c10f4ed7bc4b63c051fac78faf1e Mon Sep 17 00:00:00 2001
+From: Indr1d-C0ld <102763446+Indr1d-C0ld@users.noreply.github.com>
+Date: Mon, 16 Nov 2026 00:26:01 +0100
+Subject: [PATCH 05/14] SAGA2: Merge prototype immunities into loaded actors
+
+The effective resistances and immunities of an actor are saved with the
+game, and the prototype's own bits are always part of them. Merging the
+prototype bits back in on load makes corrected prototype data (such as
+the restoration's fix making the ghost child Rallo Jovanc immune to
+damage) apply to games saved before the correction.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ engines/saga2/actor.cpp | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/engines/saga2/actor.cpp b/engines/saga2/actor.cpp
+index 29e5053c..99c9b8f6 100644
+--- a/engines/saga2/actor.cpp
++++ b/engines/saga2/actor.cpp
+@@ -1207,6 +1207,13 @@ Actor::Actor(Common::InSaveFile *in) : GameObject(in) {
+ 	_actionCounter = in->readByte();
+ 	_effectiveResistance = in->readUint16LE();
+ 	_effectiveImmunity = in->readUint16LE();
++	//  The prototype's own resistances and immunities are always part of the
++	//  effective ones. Merge them back in, so that corrected prototype data
++	//  also applies to games saved before the correction.
++	if (_prototype) {
++		_effectiveResistance |= getBaseResistance();
++		_effectiveImmunity |= getBaseImmunity();
++	}
+ 	_recPointsPerUpdate = in->readSint16LE();
+ 	_currentRecoveryPoints = in->readUint16LE();
+ 
+-- 
+2.47.3
+

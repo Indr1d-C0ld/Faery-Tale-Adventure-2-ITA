@@ -1,0 +1,105 @@
+From 4f38f0339d3694c97df4c8d1e53030be9952e3ad Mon Sep 17 00:00:00 2001
+From: Indr1d-C0ld <102763446+Indr1d-C0ld@users.noreply.github.com>
+Date: Mon, 16 Nov 2026 00:26:02 +0100
+Subject: [PATCH 13/14] SAGA2: Load active spells from games saved by the DOS
+ version
+
+The original executable stored the spell instances as they were in
+memory, with the two SpellID enums 32 bits wide, while ScummVM reads and
+writes them as bytes. Loading a DOS save with a spell in flight read
+every following field out of place and failed an array assertion on a
+bogus target ID. Read each instance in ScummVM layout first and, when
+the result is implausible, again in the DOS layout.
+
+Also report object IDs between the object and actor ranges as invalid
+instead of indexing the actor list with a negative value.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ engines/saga2/objects.cpp |  2 +-
+ engines/saga2/spellio.cpp | 22 +++++++++++++++++++---
+ engines/saga2/spellio.h   |  3 ++-
+ 3 files changed, 22 insertions(+), 5 deletions(-)
+
+diff --git a/engines/saga2/objects.cpp b/engines/saga2/objects.cpp
+index b326192e..f255de20 100644
+--- a/engines/saga2/objects.cpp
++++ b/engines/saga2/objects.cpp
+@@ -376,7 +376,7 @@ GameObject *GameObject::objectAddress(ObjectID id) {
+ 		return worldList != nullptr ? &worldList[id - WorldBaseID] : nullptr;
+ 	}
+ 
+-	if (id - ActorBaseID >= kActorCount)
++	if (id < ActorBaseID || id - ActorBaseID >= kActorCount)
+ 		error("Invalid object ID: %d!", id);
+ 
+ 	return (int)g_vm->_act->_actorList.size() > id - ActorBaseID ? g_vm->_act->_actorList[id - ActorBaseID] : nullptr;
+diff --git a/engines/saga2/spellio.cpp b/engines/saga2/spellio.cpp
+index 1ccde2a8..0289a1d8 100644
+--- a/engines/saga2/spellio.cpp
++++ b/engines/saga2/spellio.cpp
+@@ -296,20 +296,30 @@ StorageSpellInstance::StorageSpellInstance() : implementAge(0), effect(0), dProt
+ 	world(0), age(0), spell(kSpellNone), maxAge(0), effSeq(0), eListSize(0) {
+ }
+ 
+-void StorageSpellInstance::read(Common::InSaveFile *in) {
++//  Games saved by the original DOS executable store the structure as it was
++//  in memory, where the SpellID enums are 32 bits wide; ScummVM writes them
++//  as single bytes. Everything else has the same layout.
++void StorageSpellInstance::read(Common::InSaveFile *in, bool dosLayout) {
+ 	implementAge = in->readSint32LE();
+ 	effect = in->readUint16LE();
+-	dProto = (SpellID)in->readByte();
++	dProto = (SpellID)(dosLayout ? in->readUint32LE() : in->readByte());
+ 	caster = in->readUint16LE();
+ 	target.read(in);
+ 	world = in->readUint16LE();
+ 	age = in->readSint32LE();
+-	spell = (SpellID)in->readByte();
++	spell = (SpellID)(dosLayout ? in->readUint32LE() : in->readByte());
+ 	maxAge = in->readSint32LE();
+ 	effSeq = in->readSint16LE();
+ 	eListSize = in->readSint16LE();
+ }
+ 
++bool StorageSpellInstance::isPlausible() {
++	return isWorld(world)
++	       && target.type > SpellTarget::kSpellTargetNone && target.type <= SpellTarget::kSpellTargetTAG
++	       && (target.obj == Nothing || isObject(target.obj) || isActor(target.obj) || isWorld(target.obj))
++	       && eListSize >= 0 && eListSize < 1024;
++}
++
+ void StorageSpellInstance::write(Common::MemoryWriteStreamDynamic *out) {
+ 	out->writeSint32LE(implementAge);
+ 	out->writeUint16LE(effect);
+@@ -397,7 +407,13 @@ void SpellDisplayList::read(Common::InSaveFile *in) {
+ 			debugC(3, kDebugSaveload, "Loading Spell Instance %d", i);
+ 			SpellInstance *si;
+ 			StorageSpellInstance ssi;
++			int64 start = in->pos();
+ 			ssi.read(in);
++			if (!ssi.isPlausible()) {
++				in->seek(start);
++				ssi.read(in, true);
++				debugC(3, kDebugSaveload, "... spell instance %d stored in DOS layout", i);
++			}
+ 			si = new SpellInstance(ssi);
+ 			add(si);
+ 			si->readEffect(in, ssi.eListSize);
+diff --git a/engines/saga2/spellio.h b/engines/saga2/spellio.h
+index eca74161..b2410d0c 100644
+--- a/engines/saga2/spellio.h
++++ b/engines/saga2/spellio.h
+@@ -146,7 +146,8 @@ struct StorageSpellInstance {
+ 	StorageSpellInstance();
+ 	StorageSpellInstance(SpellInstance &si);
+ 
+-	void read(Common::InSaveFile *in);
++	void read(Common::InSaveFile *in, bool dosLayout = false);
++	bool isPlausible();
+ 	void write(Common::MemoryWriteStreamDynamic *out);
+ };
+ 
+-- 
+2.47.3
+

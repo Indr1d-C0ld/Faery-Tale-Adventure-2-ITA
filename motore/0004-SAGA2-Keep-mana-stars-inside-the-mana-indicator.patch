@@ -1,0 +1,35 @@
+From de5b8ad8e4907d33badf5d17d326f25abfb53156 Mon Sep 17 00:00:00 2001
+From: Indr1d-C0ld <102763446+Indr1d-C0ld@users.noreply.github.com>
+Date: Mon, 16 Nov 2026 00:26:01 +0100
+Subject: [PATCH 04/14] SAGA2: Keep mana stars inside the mana indicator
+
+Mana can grow past kManaMaxLevel (200), but the star and ring positions
+were interpolated without a limit, so they were drawn outside the
+indicator. The DOS version crashed when a portrait was clicked with mana
+above 255; here the blitter clips them, and they just disappear.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ engines/saga2/intrface.cpp | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/engines/saga2/intrface.cpp b/engines/saga2/intrface.cpp
+index da4a1910..8c8f0615 100644
+--- a/engines/saga2/intrface.cpp
++++ b/engines/saga2/intrface.cpp
+@@ -1170,6 +1170,12 @@ void CManaIndicator::getManaLineInfo(uint16 index,
+ 	if (manaAmount == 0) manaAmount = 1;
+ 	if (baseManaAmount == 0) baseManaAmount = 1;
+ 
++	//  Mana keeps growing past kManaMaxLevel, but the stars must stay on the
++	//  rim of the well. The original drew them outside the indicator buffer,
++	//  which crashed the DOS version when clicking a portrait with mana > 255.
++	manaAmount = CLIP<int16>(manaAmount, 1, kManaMaxLevel);
++	baseManaAmount = CLIP<int16>(baseManaAmount, 1, kManaMaxLevel);
++
+ 	manaLineInfo manaInfo;
+ 
+ 	//  Calculate the positions of the mana stars, and which images to use.
+-- 
+2.47.3
+

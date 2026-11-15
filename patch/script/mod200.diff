@@ -1,0 +1,30 @@
+--- a/mod200.asm
++++ b/mod200.asm
+@@ -1,5 +1,9 @@
+ ; modulo 200 (SEG\x84), 2014 byte, stringhe in risorsa 201+2 (37 stringhe)
+ .module 200
++; PATCH B1 (CATALOGO.md): Krogatt (script 601) ha due onSpecialAttack. La vtable usa solo la seconda
++; (incantesimo 28 nel 25% dei casi, con un insulto); la prima, con le battute cannibali A186-A193, A224,
++; era orfana. Il ramo "non fare nulla" della seconda ora salta dentro la prima, dopo le sue
++; inizializzazioni identiche. Nessun offset si sposta.
+       0  .data 01 00 c9 00 02 00
+ 
+       6  .func onSpecialAttack
+@@ -11,7 +15,7 @@
+      41  ccall          1 scriptObject2Actor
+      45  putint_v       stack[-2]
+      49  call_member_v  0 105 deref[stack[-4] -> GameObject:0]
+-     60  jmp_random     99 60:105 10:108 10:133 3:158 1:183 2:208 1:233 10:258 1:283 1:308
++     60  jmp_random     159 120:105 10:108 10:133 3:158 1:183 2:208 1:233 10:258 1:283 1:308   ; B1: silenzio da 60/99 a 120/159
+     105  jmp            330
+     108  strlit         #0                                       ; 'Roooowwwwllllll!!!!'
+     111  strlit         #1                                       ; 'A284'
+@@ -77,7 +81,7 @@
+     373  getint         thread[8]
+     377  ccall          1 scriptObject2Actor
+     381  putint_v       stack[-2]
+-    385  jmp_random     4 1:398 3:643
++    385  jmp_random     4 1:398 3:49   ; B1: invece di non fare nulla, gli insulti cannibali della prima onSpecialAttack (stesso frame)
+     398  getint         stack[-2]
+     402  constint       28
+     405  getint         stack[-4]

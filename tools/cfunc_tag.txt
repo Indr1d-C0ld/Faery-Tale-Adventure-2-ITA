@@ -1,0 +1,17 @@
+scriptTagThisID
+scriptTagGetState
+scriptTagSetState
+scriptTagSetAnimation
+scriptTagNumAssoc
+scriptTagAssoc
+scriptTagGetTargetU
+scriptTagGetTargetV
+scriptTagGetTargetZ
+scriptTagGetTargetW
+scriptTagIsLocked
+scriptTagSetLocked
+scriptTagGetKeyType
+scriptTagUse
+scriptTagSetWait
+scriptTagObtainLock
+scriptTagReleaseLock

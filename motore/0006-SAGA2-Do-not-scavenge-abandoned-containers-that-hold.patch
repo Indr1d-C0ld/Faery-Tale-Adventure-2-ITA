@@ -1,0 +1,51 @@
+From 52c2b15f375207aabd79b4ea3d33eebadce3f3c4 Mon Sep 17 00:00:00 2001
+From: Indr1d-C0ld <102763446+Indr1d-C0ld@users.noreply.github.com>
+Date: Mon, 16 Nov 2026 00:26:01 +0100
+Subject: [PATCH 06/14] SAGA2: Do not scavenge abandoned containers that hold
+ objects
+
+Objects the player drops become scavengable and are deleted recursively
+after a while, or reused when the object pool runs out. A chest the
+player moved therefore vanished together with everything stored in it.
+Keep scavengable objects that still contain other objects; everything
+else is cleaned up as before.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ engines/saga2/objects.cpp | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/engines/saga2/objects.cpp b/engines/saga2/objects.cpp
+index 218a65ea..98cf143a 100644
+--- a/engines/saga2/objects.cpp
++++ b/engines/saga2/objects.cpp
+@@ -1253,9 +1253,11 @@ GameObject *GameObject::newObject() {   // get a newly created object
+ 		for (i = ImportantLimbo + 1; i < objectCount; i++) {
+ 			obj = &objectList[i];
+ 
++			//  A container the player filled must not take its contents with it
+ 			if (obj->isScavengable()
+ 			        &&  !obj->isActivated()
+-			        &&  isWorld(obj->IDParent()))
++			        &&  isWorld(obj->IDParent())
++			        &&  obj->_data.childID == Nothing)
+ 				break;
+ 		}
+ 
+@@ -4601,10 +4603,13 @@ void doBackgroundSimulation() {
+ 			//  and is not sitting inside a container,
+ 			//  then the object will be scavenged after an average
+ 			//  of 600 seconds (10 minutes).
++			//  A container that still holds objects is kept: deleting it
++			//  would also delete the items the player stored in it.
+ 
+ 			if (obj->isScavengable()
+ 			        &&  !obj->isActivated()
+ 			        &&  isWorld(obj->IDParent())
++			        &&  obj->_data.childID == Nothing
+ 			        &&  g_vm->_rnd->getRandomNumber(MIN(objectLimboCount / 2, 60) - 1) == 0) {
+ 				obj->deleteObjectRecursive();
+ 			}
+-- 
+2.47.3
+

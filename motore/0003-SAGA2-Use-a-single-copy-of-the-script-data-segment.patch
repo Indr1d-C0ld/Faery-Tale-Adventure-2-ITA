@@ -1,0 +1,116 @@
+From 1f95c189feac0003c5fb797818156d40863b8676 Mon Sep 17 00:00:00 2001
+From: Indr1d-C0ld <102763446+Indr1d-C0ld@users.noreply.github.com>
+Date: Mon, 16 Nov 2026 00:26:01 +0100
+Subject: [PATCH 03/14] SAGA2: Use a single copy of the script data segment
+
+The data segment was loaded twice: once by initScripts() for data[]
+addressing and saving, and again by loadIndexResource() for far[] and
+array addressing. Writes through one addressing mode were invisible to
+the other and far[] writes were lost on save. dataSegIndex was never set.
+
+Set dataSegIndex and make segmentAddress()/segmentArrayAddress() return
+the shared buffer for it. This fixes Captain Navis (Muybridge dead), the
+Timequake spell and several other script links, so the Navis workaround
+is removed.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ engines/saga2/hresmgr.cpp |  7 +++++++
+ engines/saga2/hresmgr.h   |  1 +
+ engines/saga2/interp.cpp  | 22 +++++++++++-----------
+ 3 files changed, 19 insertions(+), 11 deletions(-)
+
+diff --git a/engines/saga2/hresmgr.cpp b/engines/saga2/hresmgr.cpp
+index 385ed32d..10f51a5d 100644
+--- a/engines/saga2/hresmgr.cpp
++++ b/engines/saga2/hresmgr.cpp
+@@ -115,6 +115,13 @@ uint32 hResContext::size(hResID id) {
+ 	return entry->size;
+ }
+ 
++int16 hResContext::indexOf(hResID id) {
++	hResEntry *entry = findEntry(id);
++	if (entry == nullptr)
++		return -1;
++	return (int16)(entry - _base);
++}
++
+ uint32 hResContext::count() {
+ 	return _numEntries;
+ }
+diff --git a/engines/saga2/hresmgr.h b/engines/saga2/hresmgr.h
+index 2f191cbd..9d8e821a 100644
+--- a/engines/saga2/hresmgr.h
++++ b/engines/saga2/hresmgr.h
+@@ -124,6 +124,7 @@ public:
+ 
+ 	uint32      size(hResID id);
+ 	uint32      count();
++	int16       indexOf(hResID id);
+ 	uint32      count(hResID id);
+ 	bool        seek(hResID id);
+ 	void        rest();
+diff --git a/engines/saga2/interp.cpp b/engines/saga2/interp.cpp
+index 1349522d..a4dc1955 100644
+--- a/engines/saga2/interp.cpp
++++ b/engines/saga2/interp.cpp
+@@ -57,7 +57,7 @@ struct ModuleEntry      *moduleList;            // loaded from resource
+ int16                    moduleBaseResource,
+                          moduleCount;
+ 
+-uint16                  dataSegIndex;           // saved index of data seg
++uint16                  dataSegIndex = 0xFFFF;  // saved index of data seg
+ byte                   *dataSegment,            // loaded in data
+                        *exportSegment;          // export table from SAGA
+ 
+@@ -196,6 +196,11 @@ uint8 *segmentAddress(uint16 segment, uint16 offset) {
+ 	if ((int16)segment < 0)
+ 		return builtinObjectAddress(segment, offset);
+ 
++	//  The data segment must be the same buffer used by "data[]" addressing
++	//  and saved with the game, not a second copy loaded by index
++	if (segment == dataSegIndex)
++		return dataSegment + offset;
++
+ 	segHandle = scriptRes->loadIndexResource(segment, "object segment");
+ 	if (segHandle == nullptr)
+ 		return nullptr;
+@@ -209,7 +214,10 @@ uint8 *segmentArrayAddress(uint16 segment, uint16 index) {
+ 	if ((int16)segment < 0)
+ 		return builtinObjectAddress(segment, index);
+ 
+-	segHandle = scriptRes->loadIndexResource(segment, "object array segment");
++	if (segment == dataSegIndex)
++		segHandle = dataSegment;
++	else
++		segHandle = scriptRes->loadIndexResource(segment, "object array segment");
+ 	if (segHandle == nullptr)
+ 		return nullptr;
+ 
+@@ -244,15 +252,6 @@ uint8 *byteAddress(Thread *th, uint8 **pcPtr) {
+ 		IMMED_WORD(offset);
+ 		debugC(3, kDebugScripts, "byteAddress: far[%s:%d] = %d", seg2str(seg).c_str(), offset, *segmentAddress(seg, offset));
+ 		*pcPtr = pc;
+-
+-		// FIXME: WORKAROUND: Fixes Captain Navis (5299, 17715, 80) in Maldavith not allowing passage to the Tamnath Ruins through sail even if Muybridge is dead.
+-		if (seg == 130 && offset == 2862) {
+-			warning("WORKAROUND: byteAddress: far");
+-			Actor *boss = (Actor *)GameObject::objectAddress(32880);
+-			if (boss->isDead())
+-				return segmentAddress(130, 0);
+-		}
+-
+ 		return segmentAddress(seg, offset);
+ 
+ 	case skAddrArray:
+@@ -1690,6 +1689,7 @@ void initScripts() {
+ 		error("Unable to load the SAGA data segment");
+ 
+ 	dataSegSize = scriptRes->getSize(dataSegID, "saga data segment");
++	dataSegIndex = scriptRes->indexOf(dataSegID);
+ 	debugC(2, kDebugScripts, "dataSegment loaded at %p: size: %d", (void*)dataSegment, dataSegSize);
+ 
+ //	Common::hexdump(dataSegment, dataSegSize);
+-- 
+2.47.3
+

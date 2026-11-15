@@ -1,0 +1,437 @@
+From ee920ea5470cc69f1acc607f88ecbb1aa8f102ea Mon Sep 17 00:00:00 2001
+From: Indr1d-C0ld <102763446+Indr1d-C0ld@users.noreply.github.com>
+Date: Mon, 16 Nov 2026 00:26:02 +0100
+Subject: [PATCH 12/14] SAGA2: Add the automated test scenarios of the
+ melchior-fta2 restoration
+
+collaudoTick() runs only when the game configuration has the key
+melchior_collaudo (quest, salva or giro). It checks the restored quests
+and fixes, their persistence across a save, and wanders the world
+looking for crashes, reporting with COLLAUDO lines and then quitting.
+Driven by tools/collaudo.sh in the restoration project.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ engines/saga2/collaudo.cpp | 333 +++++++++++++++++++++++++++++++++++++
+ engines/saga2/collaudo.h   |  33 ++++
+ engines/saga2/main.cpp     |   4 +
+ engines/saga2/module.mk    |   1 +
+ 4 files changed, 371 insertions(+)
+ create mode 100644 engines/saga2/collaudo.cpp
+ create mode 100644 engines/saga2/collaudo.h
+
+diff --git a/engines/saga2/collaudo.cpp b/engines/saga2/collaudo.cpp
+new file mode 100644
+index 00000000..c44ac57a
+--- /dev/null
++++ b/engines/saga2/collaudo.cpp
+@@ -0,0 +1,333 @@
++/* ScummVM - Graphic Adventure Engine
++ *
++ * ScummVM is the legal property of its developers, whose names
++ * are too numerous to list here. Please refer to the COPYRIGHT
++ * file distributed with this source distribution.
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ *
++ */
++
++/*
++ * Automated test scenarios for the melchior-fta2 restoration of
++ * Faery Tale Adventure II. They run only when the game configuration
++ * contains the key "melchior_collaudo" (scenario name); otherwise
++ * collaudoTick() does nothing. Results are written with warning() as
++ * lines starting with "COLLAUDO", then the engine quits.
++ *
++ *   quest  - from a new game: the restored quests and fixes
++ *   salva  - after loading the game saved by "quest": persistence
++ *   giro   - random teleports in the current world for
++ *            melchior_collaudo_frames frames (crash hunting)
++ */
++
++#include "common/config-manager.h"
++
++#include "saga2/saga2.h"
++#include "saga2/fta.h"
++#include "saga2/script.h"
++#include "saga2/actor.h"
++#include "saga2/intrface.h"
++#include "saga2/magic.h"
++#include "saga2/objects.h"
++#include "saga2/objproto.h"
++#include "saga2/methods.r"
++#include "saga2/collaudo.h"
++
++namespace Saga2 {
++
++extern byte *dataSegment;
++extern bool backgroundSimulationPaused;
++
++static int16 dataWord(int off) {
++	return (int16)READ_LE_UINT16(dataSegment + off);
++}
++
++static GameObject *ogg(ObjectID id) {
++	return GameObject::objectAddress(id);
++}
++
++static int passati = 0, falliti = 0;
++
++static void esito(const char *nome, bool ok, const char *dettaglio = "") {
++	if (ok)
++		passati++;
++	else
++		falliti++;
++	warning("COLLAUDO %s %s %s", ok ? "OK  " : "FALLITO", nome, dettaglio);
++}
++
++static int oroDi(ObjectID actor) {
++	int n = 0;
++	for (ObjectID c = ogg(actor)->IDChild(); c != Nothing; c = ogg(c)->IDNext())
++		if (ogg(c)->getProtoNum() == 354)
++			n += ogg(c)->getExtra();
++	return n;
++}
++
++static bool haPergamena(ObjectID actor, int testo) {
++	for (ObjectID c = ogg(actor)->IDChild(); c != Nothing; c = ogg(c)->IDNext())
++		if (ogg(c)->getProtoNum() == 650 && ogg(c)->getExtra() == testo)
++			return true;
++	return false;
++}
++
++static int16 chiama(ObjectID obj, int metodo, ObjectID enactor, ObjectID diretto, ObjectID indiretto) {
++	scriptCallFrame scf;
++	scf.invokedObject = obj;
++	scf.enactor = enactor;
++	scf.directObject = diretto;
++	scf.indirectObject = indiretto;
++	scf.value = 0;
++	runObjectMethod(obj, metodo, scf);
++	return scf.returnVal;
++}
++
++static void dai(ObjectID oggetto, ObjectID a) {
++	ogg(oggetto)->move(Location(TilePoint(0, 0, 0), ActorBaseID));
++	ogg(oggetto)->dropOn(ActorBaseID, a);
++}
++
++static void fine() {
++	warning("COLLAUDO FINE superati %d falliti %d", passati, falliti);
++	Engine::quitGame();
++}
++
++enum {
++	kJulian = ActorBaseID,
++	kBrythe = 32854, kWort = 32772, kRifoss = 32773, kRallo = 33184,
++	kKrogatt = 32774, kRoska = 32947,
++	kGlobo = 1774, kCorona = 4459, kScettro = 4460, kCuore = 431
++};
++
++static void scenarioQuest(int f) {
++	static int oroPrima = 0;
++	static TilePoint partenza;
++
++	switch (f) {
++	case 1: {
++		((Actor *)ogg(kJulian))->_godmode = true;
++		partenza = ogg(kJulian)->getLocation();
++		esito("C1 corona da Smash", ogg(kCorona)->IDParent() == 33278 && ogg(kCorona)->getProtoNum() == 970);
++		esito("C1 scettro da Bluto", ogg(kScettro)->IDParent() == 33182 && ogg(kScettro)->getProtoNum() == 971);
++		esito("C1 classe di Brythe", ogg(kBrythe)->getScript() == 1828);
++		esito("C4 classe di Wort", ogg(kWort)->getScript() == 1829);
++		esito("traduzione nome del Globo", strcmp(ogg(kGlobo)->objName(), "Globo Celeste") == 0, ogg(kGlobo)->objName());
++		break;
++	}
++	case 10: {
++		chiama(kGlobo, Method_GameObject_onAcceptStrike, kJulian, kGlobo, kJulian);
++		bool chiave = false;
++		for (int i = 0; i < 4971; i++) {
++			GameObject *o = ogg(i);
++			if (o->getProtoNum() == 427 && o->getExtra() == 21 && o->IDParent() == ogg(kGlobo)->IDParent()
++			        && (o->getLocation() - ogg(kGlobo)->getLocation()).quickHDistance() < 8)
++				chiave = true;
++		}
++		esito("C1 Globo colpito resta Globo", ogg(kGlobo)->getProtoNum() == 168 && ogg(kGlobo)->getScript() == 713);
++		esito("C1 Brass Key accanto al Globo", chiave);
++		break;
++	}
++	case 20: {
++		oroPrima = oroDi(kJulian);
++		ObjectID g = Nothing;
++		for (int i = 0; i < 4971 && g == Nothing; i++)
++			if (ogg(i)->getProtoNum() == 354 && isWorld(ogg(i)->IDParent()))
++				g = i;
++		dai(g, kRifoss);
++		esito("D6 regalo generico: Rifoss lo tiene", ogg(g)->IDParent() == kRifoss);
++		break;
++	}
++	case 30:
++		oroPrima = oroDi(kJulian);
++		dai(kGlobo, kBrythe);
++		break;
++	case 40:
++		dai(kCorona, kBrythe);
++		esito("C1 due pezzi, Regalia incompleta", dataWord(5000) == 1 && dataWord(5002) == 1 && dataWord(5006) == 0);
++		break;
++	case 50: {
++		dai(kScettro, kBrythe);
++		esito("C1 Regalia completa", dataWord(5004) == 1 && dataWord(5006) == 1);
++		esito("C1 proclama (496) e decreto (497)", haPergamena(kJulian, 496) && haPergamena(kJulian, 497));
++		Common::String d = Common::String::format("oro %d -> %d", oroPrima, oroDi(kJulian));
++		esito("C1 500 monete da Brythe", oroDi(kJulian) == oroPrima + 500, d.c_str());
++		break;
++	}
++	case 60:
++		for (ObjectID id = ActorBaseID; id < ActorBaseID + kPlayerActors; ++id)
++			((Actor *)ogg(id))->setLocation(TilePoint(13221 + 40, 12533, 16));
++		break;
++	case 80: {
++		ObjectID fl = Nothing;
++		for (int i = 0; i < 4971 && fl == Nothing; i++)
++			if (ogg(i)->getProtoNum() == 115)
++				fl = i;
++		ogg(fl)->move(Location(TilePoint(0, 0, 0), kJulian));
++		ogg(fl)->use(kJulian);
++		bool via = true;
++		for (ObjectID g = 4249; g <= 4252; g++)
++			if (isWorld(ogg(g)->IDParent()))
++				via = false;
++		esito("C4 flauto scaccia i topi di Padavis", via && dataWord(5010) == 1);
++		oroPrima = oroDi(kJulian);
++		break;
++	}
++	case 90: {
++		chiama(kWort, Method_Actor_onTalkTo, kJulian, kWort, Nothing);
++		Common::String d = Common::String::format("oro %d -> %d", oroPrima, oroDi(kJulian));
++		esito("C4 Wort paga 150 monete", oroDi(kJulian) == oroPrima + 150 && dataWord(5012) == 1, d.c_str());
++		oroPrima = oroDi(kJulian);
++		break;
++	}
++	case 100: {
++		chiama(kWort, Method_Actor_onTalkTo, kJulian, kWort, Nothing);
++		esito("C4 Wort paga una volta sola", oroDi(kJulian) == oroPrima);
++		break;
++	}
++	case 110: {
++		Actor *r = (Actor *)ogg(kRallo);
++		for (int t = 0; t < 16; t++)
++			r->acceptDamage(kJulian, 50, (effectDamageTypes)t);
++		esito("A4 Rallo Jovanc immune ai danni", !r->isDead());
++		break;
++	}
++	case 120: {
++		for (int i = 0; i < 40; i++)
++			chiama(kKrogatt, Method_Actor_onSpecialAttack, kKrogatt, kKrogatt, kJulian);
++		esito("B1 40 attacchi speciali di Krogatt senza errori", true);
++		break;
++	}
++	case 130: {
++		chiama(kCuore, Method_GameObject_onAcceptStrike, kJulian, kCuore, kJulian);
++		esito("C3 cuore intatto con Roska vivo", isWorld(ogg(kCuore)->IDParent()) && dataWord(5020) == 0);
++		((Actor *)ogg(kRoska))->getStats()->vitality = 0;
++		break;
++	}
++	case 140:
++		chiama(kCuore, Method_GameObject_onAcceptStrike, kJulian, kCuore, kJulian);
++		esito("C3 cuore spezzato dopo la morte di Roska", !isWorld(ogg(kCuore)->IDParent()) && dataWord(5020) == 1);
++		break;
++	case 150: {
++		SkillProto *s = skillProtoFromID(36);
++		esito("A5 incantesimo 36 risolto come incantesimo", s != nullptr && (s->containmentSet() & ProtoObj::kIsSkill));
++		break;
++	}
++	case 160: {
++		Actor *c = getCenterActor();
++		for (int i = 0; i < 6; i++) {
++			c->getBaseStats()->mana(i) = 300 + 100 * i;
++			c->_effectiveStats.mana(i) = 300 + 100 * i;
++		}
++		setControlPanelsToIndividualMode(0);
++		break;
++	}
++	case 200: {
++		// D8: contenitore pieno abbandonato contro oggetto vuoto abbandonato
++		ObjectID pieno = Nothing, vuoto = Nothing;
++		for (int i = ImportantLimbo + 1; i < 4971 && (pieno == Nothing || vuoto == Nothing); i++) {
++			GameObject *o = ogg(i);
++			if (!isWorld(o->IDParent()) || o->isActivated() || o->isImportant() || isActor(o))
++				continue;
++			if (o->IDChild() != Nothing && pieno == Nothing)
++				pieno = i;
++			else if (o->IDChild() == Nothing && vuoto == Nothing && !(o->_data.objectFlags & kObjectNoRecycle))
++				vuoto = i;
++		}
++		ogg(pieno)->setScavengable(true);
++		ogg(vuoto)->setScavengable(true);
++		backgroundSimulationPaused = false;
++		for (int k = 0; k < 400 && isWorld(ogg(vuoto)->IDParent()); k++)
++			for (int r = 0; r < 50; r++)
++				doBackgroundSimulation();
++		esito("D8 oggetto vuoto abbandonato eliminato (controllo)", !isWorld(ogg(vuoto)->IDParent()));
++		esito("D8 contenitore pieno abbandonato conservato", isWorld(ogg(pieno)->IDParent()));
++		break;
++	}
++	case 220:
++		g_vm->saveGameState(97, "collaudo", false);
++		warning("COLLAUDO salvato nello slot 97");
++		break;
++	case 230:
++		fine();
++		break;
++	default:
++		break;
++	}
++}
++
++static void scenarioSalva(int f) {
++	if (f == 30) {
++		esito("salvataggio: globali della Regalia",
++		      dataWord(5000) == 1 && dataWord(5002) == 1 && dataWord(5004) == 1 && dataWord(5006) == 1);
++		esito("salvataggio: globali di topi, Wort e cuore",
++		      dataWord(5010) == 1 && dataWord(5012) == 1 && dataWord(5020) == 1);
++		esito("salvataggio: pergamene di Julian", haPergamena(kJulian, 496) && haPergamena(kJulian, 497));
++		esito("salvataggio: immunità di Rallo", ((Actor *)ogg(kRallo))->_effectiveImmunity == 0xFFFF);
++		esito("salvataggio: classi di Brythe e Wort", ogg(kBrythe)->getScript() == 1828 && ogg(kWort)->getScript() == 1829);
++		fine();
++	}
++}
++
++static void scenarioGiro(int f) {
++	static TilePoint base;
++	static int durata = 0;
++
++	if (f == 1) {
++		base = getCenterActor()->getLocation();
++		durata = ConfMan.hasKey("melchior_collaudo_frames") ? ConfMan.getInt("melchior_collaudo_frames") : 3000;
++		for (ObjectID id = ActorBaseID; id < ActorBaseID + kPlayerActors; ++id)
++			((Actor *)ogg(id))->_godmode = true;
++		warning("COLLAUDO giro: mondo %d, %d fotogrammi", getCenterActor()->IDParent(), durata);
++	}
++	if (f % 150 == 0) {
++		TilePoint tp = base;
++		tp.u += (int16)g_vm->_rnd->getRandomNumber(2400) - 1200;
++		tp.v += (int16)g_vm->_rnd->getRandomNumber(2400) - 1200;
++		for (ObjectID id = ActorBaseID; id < ActorBaseID + kPlayerActors; ++id)
++			((Actor *)ogg(id))->setLocation(tp);
++	}
++	if (f >= durata) {
++		esito("giro senza errori", true, Common::String::format("%d fotogrammi", durata).c_str());
++		fine();
++	}
++}
++
++void collaudoTick() {
++	static int fotogramma = 0;
++	static Common::String scenario;
++	static bool letto = false;
++
++	if (!letto) {
++		letto = true;
++		if (ConfMan.hasKey("melchior_collaudo"))
++			scenario = ConfMan.get("melchior_collaudo");
++	}
++	if (scenario.empty())
++		return;
++
++	//  Leave the game a few seconds to settle after loading
++	if (++fotogramma < 60)
++		return;
++	int f = fotogramma - 59;
++
++	if (scenario == "quest")
++		scenarioQuest(f);
++	else if (scenario == "salva")
++		scenarioSalva(f);
++	else if (scenario == "giro")
++		scenarioGiro(f);
++}
++
++} // End of namespace Saga2
+diff --git a/engines/saga2/collaudo.h b/engines/saga2/collaudo.h
+new file mode 100644
+index 00000000..36fac4a0
+--- /dev/null
++++ b/engines/saga2/collaudo.h
+@@ -0,0 +1,33 @@
++/* ScummVM - Graphic Adventure Engine
++ *
++ * ScummVM is the legal property of its developers, whose names
++ * are too numerous to list here. Please refer to the COPYRIGHT
++ * file distributed with this source distribution.
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ *
++ */
++
++#ifndef SAGA2_COLLAUDO_H
++#define SAGA2_COLLAUDO_H
++
++namespace Saga2 {
++
++//  Automated test scenarios of the melchior-fta2 restoration; does nothing
++//  unless the game configuration contains "melchior_collaudo".
++void collaudoTick();
++
++} // End of namespace Saga2
++
++#endif
+diff --git a/engines/saga2/main.cpp b/engines/saga2/main.cpp
+index 5bc60644..45e1ff13 100644
+--- a/engines/saga2/main.cpp
++++ b/engines/saga2/main.cpp
+@@ -38,6 +38,7 @@
+ #include "saga2/messager.h"
+ #include "saga2/intrface.h"
+ #include "saga2/script.h"
++#include "saga2/collaudo.h"
+ #include "saga2/localize.h"
+ #include "saga2/mainmap.h"
+ #include "saga2/display.h"
+@@ -257,6 +258,9 @@ void processEventLoop(bool updateScreen) {
+ 
+ 	debugC(1, kDebugEventLoop, "EventLoop: starting event loop");
+ 
++	if (fullInitialized)
++		collaudoTick();
++
+ 	if (g_vm->shouldQuit()) {
+ 		//g_vm->_gameRunning=false;
+ 		endGame();
+diff --git a/engines/saga2/module.mk b/engines/saga2/module.mk
+index 873e3cea..6ab77954 100644
+--- a/engines/saga2/module.mk
++++ b/engines/saga2/module.mk
+@@ -10,6 +10,7 @@ MODULE_OBJS := \
+ 	blitters.o \
+ 	button.o \
+ 	calendar.o \
++	collaudo.o \
+ 	console.o \
+ 	contain.o \
+ 	display.o \
+-- 
+2.47.3
+

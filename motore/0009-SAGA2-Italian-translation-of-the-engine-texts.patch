@@ -1,0 +1,519 @@
+From 9b912c6f1e145aac338ca14245cd2446fa0d08f5 Mon Sep 17 00:00:00 2001
+From: Indr1d-C0ld <102763446+Indr1d-C0ld@users.noreply.github.com>
+Date: Mon, 16 Nov 2026 00:26:01 +0100
+Subject: [PATCH 09/14] SAGA2: Italian translation of the engine texts
+
+Translate the user interface, status messages, automap labels and the
+no-saved-games dialog of the melchior-fta2 restoration build. Plural
+object names use "name (count)" instead of appending an English 's'.
+The book text buffer grows from 4096 to 16384 characters, because the
+translated books are longer than the original ones.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ engines/saga2/document.cpp |   2 +-
+ engines/saga2/localize.h   | 156 ++++++++++++++++++-------------------
+ engines/saga2/mapfeatr.cpp | 132 +++++++++++++++----------------
+ engines/saga2/objects.cpp  |   4 +-
+ engines/saga2/uidialog.cpp |   2 +-
+ engines/saga2/uitext.h     |  54 ++++++-------
+ 6 files changed, 175 insertions(+), 175 deletions(-)
+
+diff --git a/engines/saga2/document.cpp b/engines/saga2/document.cpp
+index ce570a1d..7f11592b 100644
+--- a/engines/saga2/document.cpp
++++ b/engines/saga2/document.cpp
+@@ -676,7 +676,7 @@ void CDocument::draw() {         // redraw the window
+    Text buffer
+  * ===================================================================== */
+ 
+-const int       _textSize = 4096;
++const int       _textSize = 16384;     // was 4096: translated books are longer
+ char            bookText[_textSize] = { "" };
+ 
+ void appendBookText(char *string) {
+diff --git a/engines/saga2/localize.h b/engines/saga2/localize.h
+index 21f500fe..fbb8d43a 100644
+--- a/engines/saga2/localize.h
++++ b/engines/saga2/localize.h
+@@ -28,108 +28,108 @@
+ 
+ namespace Saga2 {
+ 
+-#define ALLOCATION_ERROR    "Required allocation failed"
+-#define RESHANDLE_ERROR     "Memory heap exhausted"
+-
+-#define WOUNDED_STATUS      "%s is badly wounded!"
+-#define HURT_STATUS         "%s is hurt."
+-#define CALENDAR_STATUS     "It is %s, day %d, week %d."
+-
+-#define HOUR00_TIME         "midnight"
+-#define HOUR02_TIME         "morning"
+-#define HOUR06_TIME         "mid-morning"
+-#define HOUR12_TIME         "noon"
+-#define HOUR18_TIME         "mid-afternoon"
+-#define HOUR22_TIME         "evening"
+-
+-
+-#define IDEAS_MENTAL        "Ideas"
+-#define SPELL_MENTAL        "Spells"
+-#define SKILL_MENTAL        "Skills"
+-
+-#define CLOSE_MOUSE         "Close"
+-#define SCROLL_MOUSE        "Scroll Inventory"
+-
+-#define ASLEEP_STATE        "Asleep"
+-#define PARALY_STATE        "Paralysed"
+-#define BLIND_STATE         "Blind"
+-#define AFRAID_STATE        "Afraid"
+-#define ANGRY_STATE         "Angry"
+-#define BADWND_STATE        "Badly Wounded"
+-#define HURT_STATE          "Hurt"
+-#define POISON_STATE        "Poisoned"
+-#define DISEAS_STATE        "Diseased"
+-#define NORMAL_STATE        "Normal"
+-#define DEAD_STATE          "Dead"
+-
+-#define JULIAN_BROSTATE     "Julian is: "
+-#define PHILLIP_BROSTATE    "Phillip is: "
+-#define KEVIN_BROSTATE      "Kevin is: "
++#define ALLOCATION_ERROR    "Allocazione di memoria non riuscita"
++#define RESHANDLE_ERROR     "Memoria esaurita"
++
++#define WOUNDED_STATUS      "%s \xe8 gravemente ferito!"
++#define HURT_STATUS         "%s \xe8 ferito."
++#define CALENDAR_STATUS     "\xc8 %s, giorno %d, settimana %d."
++
++#define HOUR00_TIME         "mezzanotte"
++#define HOUR02_TIME         "mattina"
++#define HOUR06_TIME         "met\xe0 mattina"
++#define HOUR12_TIME         "mezzogiorno"
++#define HOUR18_TIME         "met\xe0 pomeriggio"
++#define HOUR22_TIME         "sera"
++
++
++#define IDEAS_MENTAL        "Idee"
++#define SPELL_MENTAL        "Incantesimi"
++#define SKILL_MENTAL        "Abilit\xe0"
++
++#define CLOSE_MOUSE         "Chiudi"
++#define SCROLL_MOUSE        "Scorri l'inventario"
++
++#define ASLEEP_STATE        "Addormentato"
++#define PARALY_STATE        "Paralizzato"
++#define BLIND_STATE         "Cieco"
++#define AFRAID_STATE        "Spaventato"
++#define ANGRY_STATE         "Arrabbiato"
++#define BADWND_STATE        "Gravemente ferito"
++#define HURT_STATE          "Ferito"
++#define POISON_STATE        "Avvelenato"
++#define DISEAS_STATE        "Malato"
++#define NORMAL_STATE        "Normale"
++#define DEAD_STATE          "Morto"
++
++#define JULIAN_BROSTATE     "Julian \xe8: "
++#define PHILLIP_BROSTATE    "Phillip \xe8: "
++#define KEVIN_BROSTATE      "Kevin \xe8: "
+ 
+ // FIXME: Spelling incorrect. Agression should be Aggression. Fixing changes game data and thus may cause issues
+-#define ON_AGRESS           "Agression: On"
++#define ON_AGRESS           "Aggressivit\xe0: s\xec"
+ // FIXME: Spelling incorrect. Agression should be Aggression. Fixing changes game data and thus may cause issues
+-#define OFF_AGRESS          "Agression: Off"
++#define OFF_AGRESS          "Aggressivit\xe0: no"
+ 
+-#define NO_ARMOR            "No Armor Worn"
+-#define DESC_ARMOR          "Absorb:%d, Reduce:/%d, Defense:+%d"
++#define NO_ARMOR            "Nessuna armatura"
++#define DESC_ARMOR          "Assorbe:%d, Riduce:/%d, Difesa:+%d"
+ 
+-#define ON_CENTER           "Center: On"
+-#define OFF_CENTER          "Center: Off"
++#define ON_CENTER           "Al centro: s\xec"
++#define OFF_CENTER          "Al centro: no"
+ 
+-#define ON_BANDED           "Banding: On"
+-#define OFF_BANDED          "Banding: Off"
++#define ON_BANDED           "In gruppo: s\xec"
++#define OFF_BANDED          "In gruppo: no"
+ 
+-#define OPTIONS_PANEL       "Options Panel"
++#define OPTIONS_PANEL       "Opzioni"
+ 
+-#define HEALTH_HINT         "Health:"
+-#define WEIGHT_HINT         "Weight:"
+-#define BULK_HINT           "Bulk:"
+-#define UNK_WEIGHT_HINT     "N/A"
+-#define UNK_BULK_HINT       "N/A"
++#define HEALTH_HINT         "Salute:"
++#define WEIGHT_HINT         "Peso:"
++#define BULK_HINT           "Ingombro:"
++#define UNK_WEIGHT_HINT     "n.d."
++#define UNK_BULK_HINT       "n.d."
+ 
+-#define RED_MANA            "Red Mana:"
+-#define ORANGE_MANA         "Orange Mana:"
+-#define YELLOW_MANA         "Yellow Mana:"
+-#define GREEN_MANA          "Green Mana:"
+-#define BLUE_MANA           "Blue Mana:"
+-#define VIOLET_MANA         "Purple Mana:"
++#define RED_MANA            "Mana rosso:"
++#define ORANGE_MANA         "Mana arancione:"
++#define YELLOW_MANA         "Mana giallo:"
++#define GREEN_MANA          "Mana verde:"
++#define BLUE_MANA           "Mana blu:"
++#define VIOLET_MANA         "Mana viola:"
+ 
+ 
+ #define DOS_CMDLINE         "Syntax : FTA2 \n"
+ #define WIN_CMDLINE         "Syntax : FTA2 \n"
+ 
+-#define SINGLE_CHARGE       "%s, %d Charge"
+-#define MULTI_CHARGE        "%s, %d Charges"
++#define SINGLE_CHARGE       "%s, %d carica"
++#define MULTI_CHARGE        "%s, %d cariche"
+ 
+-#define PLURAL_DESC         "%d %ss"
++#define PLURAL_DESC         "%s (%d)"
+ 
+-#define IDEAS_INVENT        "Mental Inventory: Ideas"
+-#define SPELL_INVENT        "Mental Inventory: Spells"
+-#define SKILL_INVENT        "Mental Inventory: Skills"
++#define IDEAS_INVENT        "Inventario mentale: idee"
++#define SPELL_INVENT        "Inventario mentale: incantesimi"
++#define SKILL_INVENT        "Inventario mentale: abilit\xe0"
+ 
+-#define ERROR_HEADING       "Error"
++#define ERROR_HEADING       "Errore"
+ #define ERROR_OK_BUTTON     "OK"
+-#define ERROR_RE_BUTTON     "_Retry"
+-#define ERROR_CA_BUTTON     "_Cancel"
+-#define ERROR_YE_BUTTON     "_Yes"
++#define ERROR_RE_BUTTON     "_Riprova"
++#define ERROR_CA_BUTTON     "_Annulla"
++#define ERROR_YE_BUTTON     "_S\xec"
+ #define ERROR_NO_BUTTON     "_No"
+ 
+-#define ARCHERY_SKILL       "archery skill"
+-#define SWORD_SKILL         "swordcraft skill"
+-#define SHIELD_SKILL        "shieldcraft skill"
+-#define BLUDGEON_SKILL      "bludgeon skill"
++#define ARCHERY_SKILL       "abilit\xe0 con l'arco"
++#define SWORD_SKILL         "abilit\xe0 con la spada"
++#define SHIELD_SKILL        "abilit\xe0 con lo scudo"
++#define BLUDGEON_SKILL      "abilit\xe0 con le armi contundenti"
+ #define DEAD_SKILL          ""
+-#define SPELL_SKILL         "spellcraft"
++#define SPELL_SKILL         "arte magica"
+ #define DEAD2_SKILL         ""
+-#define AGILITY_SKILL       "agility"
+-#define BRAWN_SKILL         "brawn"
++#define AGILITY_SKILL       "agilit\xe0"
++#define BRAWN_SKILL         "forza"
+ 
+-#define SKILL_STATUS         "%s's %s has increased."
+-#define VITALITY_STATUS      "%s's vitality has increased."
++#define SKILL_STATUS         "%s ha migliorato la sua %s."
++#define VITALITY_STATUS      "%s ha migliorato la sua vitalit\xe0."
+ 
+-#define ATTACK_STATUS        "%s is under attack!"
+-#define DEATH_STATUS         "%s has died!"
++#define ATTACK_STATUS        "%s \xe8 sotto attacco!"
++#define DEATH_STATUS         "%s \xe8 morto!"
+ 
+ } // end of namespace Saga2
+ 
+diff --git a/engines/saga2/mapfeatr.cpp b/engines/saga2/mapfeatr.cpp
+index c4794932..9d36b6a7 100644
+--- a/engines/saga2/mapfeatr.cpp
++++ b/engines/saga2/mapfeatr.cpp
+@@ -66,20 +66,20 @@ void initMapFeatures() {
+ //	MAP_VILLAGE(13368,12712,"The Glass Sparrow Inn");
+ //	MAP_VILLAGE(13512,12232,"The Third Eye");
+ //	MAP_VILLAGE(12712,12008,"Caladrin's General Store");
+-	MAP_VILLAGE(12904, 12328, "Royal Coach Service");
++	MAP_VILLAGE(12904, 12328, "Diligenze reali");
+ //	MAP_VILLAGE(13252,12520,"Horse Statue");
+ 
+-	MAP_CAVE(10296, 9176, "Cave");      //  Sorcerer's Lair
++	MAP_CAVE(10296, 9176, "Grotta");      //  Sorcerer's Lair
+ 
+-	MAP_VILLAGE(9693, 10633, "Goblin Village");     //  Goblin Village
++	MAP_VILLAGE(9693, 10633, "Villaggio dei goblin");     //  Goblin Village
+ //	MAP_VILLAGE(13128,12216,"Birket's Birch");
+-	MAP_VILLAGE(14456, 9544, "Castle Jovanc");
++	MAP_VILLAGE(14456, 9544, "Castello Jovanc");
+ //	MAP_VILLAGE(13894,12498,"Apple Grove");
+ 
+ 	//Hatak
+ 	MAP_VILLAGE(5096, 4351, "Gleng'l Zur");     //  Front
+ //	MAP_VILLAGE(4842,3839,"Hatak Arena");
+-	MAP_VILLAGE(8208, 3120, "Royal Coach Service");
++	MAP_VILLAGE(8208, 3120, "Diligenze reali");
+ 
+ 	//Karminac
+ 	//  Darnoc
+@@ -99,16 +99,16 @@ void initMapFeatures() {
+ //	MAP_VILLAGE(13805,19523,"Palace");
+ //	MAP_VILLAGE(13430,19120,"Weapon Exchange");
+ //	MAP_VILLAGE(13380,19190,"Pawn Shop");
+-	MAP_VILLAGE(13240, 18104, "Royal Coach Service");
++	MAP_VILLAGE(13240, 18104, "Diligenze reali");
+ 
+ 	//Roska's Citadel
+-	MAP_VILLAGE(12550, 23096, "Roska's Citadel");
++	MAP_VILLAGE(12550, 23096, "Cittadella di Roska");
+ 
+ 	//Pentere
+ 	MAP_VILLAGE(21608, 11512, "Bilton");
+ //	MAP_VILLAGE(21120,10156,"Bilton main gate");
+ //	MAP_VILLAGE(21760,10284,"Bilton Slaughter Yard");
+-	MAP_VILLAGE(22217, 11365, "Royal Coach Service");
++	MAP_VILLAGE(22217, 11365, "Diligenze reali");
+ //	MAP_VILLAGE(22424,11269,"Orsolo's Cupboard");
+ //	MAP_VILLAGE(22616,11016,"Alchemist Hollow");
+ //	MAP_VILLAGE(22394,10703,"Weapon Shack");
+@@ -124,7 +124,7 @@ void initMapFeatures() {
+ //	MAP_VILLAGE(22340,9976,"Fighter's Guild");
+ //	MAP_VILLAGE(21960,9992,"Key Figures Locksmith");
+ //	MAP_VILLAGE(22021,9801,"Brewery");
+-	MAP_VILLAGE(21608, 11512, "Bilton Noble Park");
++	MAP_VILLAGE(21608, 11512, "Parco dei nobili di Bilton");
+ //	MAP_VILLAGE(22056,11960,"Bilton Archives");
+ //	MAP_VILLAGE(22120,12164,"Gold Tree");
+ //	MAP_VILLAGE(21316,10376,"Weapon Buyer");
+@@ -139,7 +139,7 @@ void initMapFeatures() {
+ //	MAP_VILLAGE(3660,12332,"Healer's corner");
+ //	MAP_VILLAGE(4008,11944,"Mage corner");
+ //	MAP_VILLAGE(4024,11752,"Weaver");
+-	MAP_VILLAGE(4752, 10544, "Royal Coach Service");
++	MAP_VILLAGE(4752, 10544, "Diligenze reali");
+ 
+ 	//Maldavith
+ 	MAP_VILLAGE(6520, 17176, "Maldavith");
+@@ -159,69 +159,69 @@ void initMapFeatures() {
+ //	MAP_VILLAGE(5189,17689,"Dock");
+ //	MAP_VILLAGE(5680,16688,"South West Gate");
+ //	MAP_VILLAGE(6945,17468,"North East Gate");
+-	MAP_VILLAGE(1016, 19272, "Light Tower");
+-	MAP_VILLAGE(5035, 19002, "Tamnath Ruins");
++	MAP_VILLAGE(1016, 19272, "Faro");
++	MAP_VILLAGE(5035, 19002, "Rovine di Tamnath");
+ 
+ 	//Mons
+-	MAP_VILLAGE(20496, 17456, "Royal Coach Service");
++	MAP_VILLAGE(20496, 17456, "Diligenze reali");
+ 
+ 	//Aroblin
+-	MAP_VILLAGE(14152, 4360, "Amber Castle");
++	MAP_VILLAGE(14152, 4360, "Castello d'Ambra");
+ //	MAP_CAVE(14920,4952,"Dwarven Mine");
+-	MAP_VILLAGE(12560, 1968, "Royal Coach Service");
++	MAP_VILLAGE(12560, 1968, "Diligenze reali");
+ 
+ 	//STARGATES
+-	MAP_STARGATE(14792, 12856,   "Obelisks");   // Wildevarr Stargate 1
+-	MAP_STARGATE(10296, 9416,    "Obelisks");   // Wildevarr Stargate 2
+-	MAP_STARGATE(21576, 12984,   "Obelisks");   // Pentere Stargate 1
+-	MAP_STARGATE(17976, 8520,    "Obelisks");   // Pentere Stargate 2
+-	MAP_STARGATE(22328, 21832,   "Obelisks");   // Mons Stargate 1
+-	MAP_STARGATE(21816, 19784,   "Obelisks");   // Mons Stargate 2
+-	MAP_STARGATE(12216, 23624,   "Obelisks");   // Karminac Stargate 1
+-	MAP_STARGATE(14904, 17224,   "Obelisks");   // Karminac Stargate 2
+-	MAP_STARGATE(6344, 21944,    "Obelisks");   // Maldavith Stargate 1
+-	MAP_STARGATE(4152, 16200,    "Obelisks");   // Maldavith Stargate 2
+-	MAP_STARGATE(7112, 13368,    "Obelisks");   // Hethrallin Stargate 1
+-	MAP_STARGATE(3656, 9528,     "Obelisks");   // Hethrallin Stargate 2
+-	MAP_STARGATE(5944, 5192,     "Obelisks");   // Hatak Stargate 1
+-	MAP_STARGATE(1720, 968,      "Obelisks");   // Hatak Stargate 2
+-	MAP_STARGATE(13256, 4664,    "Obelisks");   // Aroblin Stargate 1
+-	MAP_STARGATE(15544, 1608,    "Obelisks");   // Aroblin Stargate 2
+-
+-	MAP_CAVE(10457, 14145, "Cave"); //Wildevarr West Cave 1
+-	MAP_CAVE(11996, 16310, "Cave"); //Wildevarr West Cave 2
+-	MAP_CAVE(11224, 14920, "Cave"); //Wildevarr West Cave 3
+-	MAP_CAVE(10181, 14664, "Cave"); //Wildevarr West Cave 4
+-	MAP_CAVE(9814, 12870, "Cave");  //Wildevarr West Cave 5
+-	MAP_CAVE(10280, 9160, "Cave");  //Wizard's Lair
+-	MAP_CAVE(12104, 8920, "Cave");  //Wildevarr Cave
+-	MAP_CAVE(13893, 13655, "Cave"); //Wildevarr Bandit Cave
+-	MAP_CAVE(14808, 15172, "Cave"); //Wildevarr Cave
+-	MAP_CAVE(9560, 20161, "Cave");  //Karminac Cave
+-	MAP_CAVE(8772, 18776, "Cave");  //Karminac Cave
+-	MAP_CAVE(14560, 18763, "Cave"); //Karminac Cave
+-	MAP_CAVE(18510, 15297, "Cave"); //Pentere Cave
+-	MAP_CAVE(20568, 15284, "Cave"); //Pentere Cave
+-	MAP_CAVE(16856, 9540, "Cave");  //Pentere Cave
+-	MAP_CAVE(4408, 9816, "Cave"); //Dark Elf UG
+-	MAP_CAVE(7368, 12888, "Cave");  //Hethrallin Cave
+-	MAP_CAVE(7128, 14664, "Cave");  //Hethrallin Cave
+-	MAP_CAVE(2648, 21185, "Cave");  //Maldavith Cave
+-	MAP_CAVE(1624, 17988, "Cave");  //Gretmar Island
+-	MAP_CAVE(6084, 22360, "Cave");  //Smuggler's Cave
+-	MAP_CAVE(1848, 15704, "Cave");  //Pirate Cave
+-	MAP_CAVE(7368, 22613, "Cave");  //Maldavith Cave
+-	MAP_CAVE(17608, 23368, "Cave"); //Mons false cairn
+-	MAP_CAVE(20420, 23368, "Cave"); //Frostwing
+-	MAP_CAVE(18852, 19768, "Cave"); //Rock Giant
+-	MAP_CAVE(21560, 19000, "Cave"); //WhiteDeep
+-	MAP_CAVE(22324, 18504, "Cave"); //Snowmen
+-	MAP_CAVE(22984, 21172, "Cave"); //Wolf Cave 1
+-	MAP_CAVE(23188, 21064, "Cave"); //Wolf Cave 2
+-	MAP_CAVE(23220, 20936, "Cave"); //Wolf Cave 3
+-	MAP_CAVE(22180, 22456, "Cave"); //IceWind
+-	MAP_CAVE(10200, 2484, "Cave");  //Aroblin Cave
+-	MAP_CAVE(14900, 4952, "Cave");  //Aroblin Mine
++	MAP_STARGATE(14792, 12856,   "Obelischi");   // Wildevarr Stargate 1
++	MAP_STARGATE(10296, 9416,    "Obelischi");   // Wildevarr Stargate 2
++	MAP_STARGATE(21576, 12984,   "Obelischi");   // Pentere Stargate 1
++	MAP_STARGATE(17976, 8520,    "Obelischi");   // Pentere Stargate 2
++	MAP_STARGATE(22328, 21832,   "Obelischi");   // Mons Stargate 1
++	MAP_STARGATE(21816, 19784,   "Obelischi");   // Mons Stargate 2
++	MAP_STARGATE(12216, 23624,   "Obelischi");   // Karminac Stargate 1
++	MAP_STARGATE(14904, 17224,   "Obelischi");   // Karminac Stargate 2
++	MAP_STARGATE(6344, 21944,    "Obelischi");   // Maldavith Stargate 1
++	MAP_STARGATE(4152, 16200,    "Obelischi");   // Maldavith Stargate 2
++	MAP_STARGATE(7112, 13368,    "Obelischi");   // Hethrallin Stargate 1
++	MAP_STARGATE(3656, 9528,     "Obelischi");   // Hethrallin Stargate 2
++	MAP_STARGATE(5944, 5192,     "Obelischi");   // Hatak Stargate 1
++	MAP_STARGATE(1720, 968,      "Obelischi");   // Hatak Stargate 2
++	MAP_STARGATE(13256, 4664,    "Obelischi");   // Aroblin Stargate 1
++	MAP_STARGATE(15544, 1608,    "Obelischi");   // Aroblin Stargate 2
++
++	MAP_CAVE(10457, 14145, "Grotta"); //Wildevarr West Cave 1
++	MAP_CAVE(11996, 16310, "Grotta"); //Wildevarr West Cave 2
++	MAP_CAVE(11224, 14920, "Grotta"); //Wildevarr West Cave 3
++	MAP_CAVE(10181, 14664, "Grotta"); //Wildevarr West Cave 4
++	MAP_CAVE(9814, 12870, "Grotta");  //Wildevarr West Cave 5
++	MAP_CAVE(10280, 9160, "Grotta");  //Wizard's Lair
++	MAP_CAVE(12104, 8920, "Grotta");  //Wildevarr Cave
++	MAP_CAVE(13893, 13655, "Grotta"); //Wildevarr Bandit Cave
++	MAP_CAVE(14808, 15172, "Grotta"); //Wildevarr Cave
++	MAP_CAVE(9560, 20161, "Grotta");  //Karminac Cave
++	MAP_CAVE(8772, 18776, "Grotta");  //Karminac Cave
++	MAP_CAVE(14560, 18763, "Grotta"); //Karminac Cave
++	MAP_CAVE(18510, 15297, "Grotta"); //Pentere Cave
++	MAP_CAVE(20568, 15284, "Grotta"); //Pentere Cave
++	MAP_CAVE(16856, 9540, "Grotta");  //Pentere Cave
++	MAP_CAVE(4408, 9816, "Grotta"); //Dark Elf UG
++	MAP_CAVE(7368, 12888, "Grotta");  //Hethrallin Cave
++	MAP_CAVE(7128, 14664, "Grotta");  //Hethrallin Cave
++	MAP_CAVE(2648, 21185, "Grotta");  //Maldavith Cave
++	MAP_CAVE(1624, 17988, "Grotta");  //Gretmar Island
++	MAP_CAVE(6084, 22360, "Grotta");  //Smuggler's Cave
++	MAP_CAVE(1848, 15704, "Grotta");  //Pirate Cave
++	MAP_CAVE(7368, 22613, "Grotta");  //Maldavith Cave
++	MAP_CAVE(17608, 23368, "Grotta"); //Mons false cairn
++	MAP_CAVE(20420, 23368, "Grotta"); //Frostwing
++	MAP_CAVE(18852, 19768, "Grotta"); //Rock Giant
++	MAP_CAVE(21560, 19000, "Grotta"); //WhiteDeep
++	MAP_CAVE(22324, 18504, "Grotta"); //Snowmen
++	MAP_CAVE(22984, 21172, "Grotta"); //Wolf Cave 1
++	MAP_CAVE(23188, 21064, "Grotta"); //Wolf Cave 2
++	MAP_CAVE(23220, 20936, "Grotta"); //Wolf Cave 3
++	MAP_CAVE(22180, 22456, "Grotta"); //IceWind
++	MAP_CAVE(10200, 2484, "Grotta");  //Aroblin Cave
++	MAP_CAVE(14900, 4952, "Grotta");  //Aroblin Mine
+ }
+ 
+ // ------------------------------------------------------------------------
+diff --git a/engines/saga2/objects.cpp b/engines/saga2/objects.cpp
+index 5f8d3fa9..b326192e 100644
+--- a/engines/saga2/objects.cpp
++++ b/engines/saga2/objects.cpp
+@@ -637,10 +637,10 @@ void GameObject::objCursorText(char nameBuf[], const int8 size, int16 count) {
+ 			if (_data.massCount != 1) {
+ 				if (count != -1) {
+ 					if (count != 1) {
+-						Common::sprintf_s(nameBuf, size, PLURAL_DESC, count, objName());     // get the count
++						Common::sprintf_s(nameBuf, size, PLURAL_DESC, objName(), count);     // get the count
+ 					}
+ 				} else {
+-					Common::sprintf_s(nameBuf, size, PLURAL_DESC, _data.massCount, objName());     // get the count
++					Common::sprintf_s(nameBuf, size, PLURAL_DESC, objName(), _data.massCount);     // get the count
+ 				}
+ 			}
+ 		}
+diff --git a/engines/saga2/uidialog.cpp b/engines/saga2/uidialog.cpp
+index d61b9cbd..a8b8d165 100644
+--- a/engines/saga2/uidialog.cpp
++++ b/engines/saga2/uidialog.cpp
+@@ -669,7 +669,7 @@ int16 FileDialog(int16 fileProcess) {
+ #ifndef ALLOW_BAD_LOADS
+ 	if (displayOnly && numValid(fieldStrings) == 0) {
+ 		destroyFileFields(fieldStrings);
+-		if (userDialog("Error", "No saved games to load!\n Would you like to start over?", "_Yes", "_No", nullptr) != 1) {
++		if (userDialog("Errore", "Nessuna partita salvata da caricare!\n Vuoi ricominciare da capo?", "_S\xec", "_No", nullptr) != 1) {
+ 			deferredLoadFlag = true;
+ 			deferredLoadID = 999;
+ 			return typeLoad;
+diff --git a/engines/saga2/uitext.h b/engines/saga2/uitext.h
+index 6593fc50..36370558 100644
+--- a/engines/saga2/uitext.h
++++ b/engines/saga2/uitext.h
+@@ -28,35 +28,35 @@
+ 
+ namespace Saga2 {
+ 
+-#define FILE_DIALOG_NONAME  "Empty Slot"
+-
+-#define SAVE_DIALOG_NAME    "Save Game"
+-#define SAVE_DIALOG_BUTTON1 "Cancel"
+-#define SAVE_DIALOG_BUTTON2 "Save"
+-
+-#define LOAD_DIALOG_NAME    "Load Game"
+-#define LOAD_DIALOG_BUTTON1 "Cancel"
+-#define LOAD_DIALOG_BUTTON2 "Load"
+-
+-#define OPTN_DIALOG_NAME    "Options"
+-#define OPTN_DIALOG_SLIDE1  "Sound Effects Volume"
+-#define OPTN_DIALOG_SLIDE2  "Speech Volume"
+-#define OPTN_DIALOG_SLIDE3  "Music Volume"
+-#define OPTN_DIALOG_CHECK1  "Auto-Aggression"
+-#define OPTN_DIALOG_CHECK2  "Auto-Wield Weapon"
+-#define OPTN_DIALOG_CHECK3  "Speech Text"
+-#define OPTN_DIALOG_CHECK4  "Night"
+-#define OPTN_DIALOG_BUTTON1 "Resume Play"
+-#define OPTN_DIALOG_BUTTON2 "Save"
+-#define OPTN_DIALOG_BUTTON3 "Load"
+-#define OPTN_DIALOG_BUTTON4 "Quit"
+-#define OPTN_DIALOG_BUTTON5 "Credits"
+-#define OPTN_DIALOG_BUTTON6 "New Game"
++#define FILE_DIALOG_NONAME  "Spazio vuoto"
++
++#define SAVE_DIALOG_NAME    "Salva partita"
++#define SAVE_DIALOG_BUTTON1 "Annulla"
++#define SAVE_DIALOG_BUTTON2 "Salva"
++
++#define LOAD_DIALOG_NAME    "Carica partita"
++#define LOAD_DIALOG_BUTTON1 "Annulla"
++#define LOAD_DIALOG_BUTTON2 "Carica"
++
++#define OPTN_DIALOG_NAME    "Opzioni"
++#define OPTN_DIALOG_SLIDE1  "Volume degli effetti"
++#define OPTN_DIALOG_SLIDE2  "Volume delle voci"
++#define OPTN_DIALOG_SLIDE3  "Volume della musica"
++#define OPTN_DIALOG_CHECK1  "Aggressivit\xe0 automatica"
++#define OPTN_DIALOG_CHECK2  "Impugna l'arma da solo"
++#define OPTN_DIALOG_CHECK3  "Sottotitoli"
++#define OPTN_DIALOG_CHECK4  "Notte"
++#define OPTN_DIALOG_BUTTON1 "Riprendi"
++#define OPTN_DIALOG_BUTTON2 "Salva"
++#define OPTN_DIALOG_BUTTON3 "Carica"
++#define OPTN_DIALOG_BUTTON4 "Esci"
++#define OPTN_DIALOG_BUTTON5 "Riconoscimenti"
++#define OPTN_DIALOG_BUTTON6 "Nuova partita"
+ 
+ #define VFYX_DIALOG_NAME    "Faery Tale Adventure"
+-#define VFYX_DIALOG_CAPTION "Do you really want to quit?"
+-#define VFYX_DIALOG_BUTTON1 "_Quit"
+-#define VFYX_DIALOG_BUTTON2 "_Continue"
++#define VFYX_DIALOG_CAPTION "Vuoi davvero uscire?"
++#define VFYX_DIALOG_BUTTON1 "_Esci"
++#define VFYX_DIALOG_BUTTON2 "_Continua"
+ 
+ } // end of namespace Saga2
+ 
+-- 
+2.47.3
+

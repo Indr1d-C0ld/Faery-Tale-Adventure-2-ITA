@@ -1,0 +1,5 @@
+# indice	copia_da	campi cambiati	(fase 5, C1)
+# Corona: copia della Emerald Crown (260) senza la sua immunità mentale e senza prezzo di vendita
+970	260	nameIndex=nome:Crown of Pentere,immun=2048,price=0
+# Scettro: oggetto generico come il Celestial Orb (168), col disegno dello Scepter of Zerox (647)
+971	168	nameIndex=nome:Scepter of Pentere,iconSprite=119,groundSprite=120,c0=99,c1=0,c2=97,c3=73,mass=1,bulk=1,cross=4,height=2,tough=10,price=0

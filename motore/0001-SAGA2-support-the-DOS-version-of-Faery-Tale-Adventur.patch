@@ -1,0 +1,121 @@
+From d2258177547dcd202963fa66529a00a602ff1f90 Mon Sep 17 00:00:00 2001
+From: Indr1d-C0ld <102763446+Indr1d-C0ld@users.noreply.github.com>
+Date: Mon, 16 Nov 2026 00:26:00 +0100
+Subject: [PATCH 01/14] SAGA2: support the DOS version of Faery Tale Adventure
+ II
+
+Load fonts, cursors, gauge and color map ranges from FTA2.EXE (DOS/4G)
+when FTA2WIN.EXE is absent. The DOS executable has no loading screen.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ engines/saga2/detection.cpp | 22 ++++++++++++++++
+ engines/saga2/saga2.cpp     | 50 +++++++++++++++++++++++++++++++------
+ 2 files changed, 65 insertions(+), 7 deletions(-)
+
+diff --git a/engines/saga2/detection.cpp b/engines/saga2/detection.cpp
+index dfd41300..6db66e7e 100644
+--- a/engines/saga2/detection.cpp
++++ b/engines/saga2/detection.cpp
+@@ -117,6 +117,28 @@ static const SAGA2GameDescription gameDescriptions[] = {
+ 		},
+ 		GID_FTA2
+ 	},
++	// Faery Tale Adventure II: Halls of the Dead - English DOS version (Melchior)
++	{
++		{
++			"fta2",
++			"DOS",
++			{
++				{"ftadata.hrs",	 GAME_RESOURCEFILE,					"6dc3cbed8df2ddd9f060a7dba4d33ef8", 15042},
++				{"fta.hrs",	     GAME_OBJRESOURCEFILE,				"c34a5ee5f1a14a87712a35c4a209a033", 213376},
++				{"scripts.hrs",	 GAME_SCRIPTFILE,					nullptr, AD_NO_SIZE},
++				{"ftasound.hrs", GAME_SOUNDFILE,					"ce930cb38922e6a03461f55d51b4e165", 12403350},
++				{"ftaimage.hrs", GAME_IMAGEFILE,					nullptr, AD_NO_SIZE},
++				{"ftavoice.hrs", GAME_VOICEFILE,					nullptr, AD_NO_SIZE },
++				{"fta2.exe",     GAME_EXECUTABLE,					"fbae90b10c7086740d3c167a34ae8d5c", 2223710},
++				AD_LISTEND
++			},
++			Common::EN_ANY,
++			Common::kPlatformDOS,
++			ADGF_NO_FLAGS,
++			GUIO1(GUIO_NOASPECT)
++		},
++		GID_FTA2
++	},
+ 	{ AD_TABLE_END_MARKER, 0 }
+ };
+ } // End of namespace Saga2
+diff --git a/engines/saga2/saga2.cpp b/engines/saga2/saga2.cpp
+index 7540b28d..b5373370 100644
+--- a/engines/saga2/saga2.cpp
++++ b/engines/saga2/saga2.cpp
+@@ -363,22 +363,58 @@ struct dataChunks {
+ 	{ nullptr,						0,			0 }
+ };
+ 
++// Offsets of the same data inside FTA2.EXE of the DOS version (DOS/4G LE executable).
++// These are plain file offsets, found by Melchior (see tools/trova_font.py).
++static const uint32 dosOffsets[] = {
++	0x00213C98,	// Onyx10Font
++	0x00211C48,	// Plate18Font
++	0x00214920,	// Helv11Font
++	0x00215654,	// Amber13Font
++	0x00217AEC,	// ThinFix8Font
++	0x00216C78,	// Script10Font
++	0,			// loadingWindowPalette (Windows only)
++	0,			// loadingWindowData (Windows only)
++	0x001C3B1C,	// ColorMapRanges
++	0x001C44CC,	// closeBx1ImageData
++	0x001C455C,	// closeBx2ImageData
++	0x001C45EC,	// usePtrImageData
++	0x001C46D0,	// xPointerImageData
++	0x001C47B4,	// arrowImageData
++	0x001C4870,	// grabPtrImageData
++	0x001C4940,	// attakPtrImageData
++	0x001C4B54,	// centerActorIndicatorImageData
++	0x001C4BA8,	// pgUpImageData
++	0x001C4CA8,	// pgDownImageData
++	0x001C4DA8,	// pgLeftImageData
++	0x001C4EA8,	// pgRightImageData
++	0x001C4FA8,	// autoWalkImageData
++	0x001C39E8,	// gaugeImageData
++};
++
+ void Saga2Engine::loadExeResources() {
+ 	Common::File exe;
+ 	const uint32 offset = 0x4F6D90 - 0xF4990;
+-
+-	if (!(exe.open("win/fta2win.exe") || exe.open("fta2win.exe")))
+-		error("FTA2WIN.EXE file is missing");
+-
+-	if (exe.size() != 1093120)
++	bool dos = false;
++
++	if (!(exe.open("win/fta2win.exe") || exe.open("fta2win.exe"))) {
++		if (!exe.open("fta2.exe"))
++			error("FTA2WIN.EXE (or FTA2.EXE of the DOS version) file is missing");
++		if (exe.size() != 2223710)
++			error("Incorrect FTA2.EXE file size. Expected is 2223710");
++		dos = true;
++	} else if (exe.size() != 1093120)
+ 		error("Incorrect FTA2WIN.EXE file size. Expected is 1093120");
+ 
+ 	for (int i = 0; chunks[i].ptr; i++) {
++		uint32 pos = dos ? dosOffsets[i] : chunks[i].offset - offset;
++
+ 		if (chunks[i].size == 0) { // Font
+-			loadFont(exe, (gFont *)chunks[i].ptr, chunks[i].offset - offset);
++			loadFont(exe, (gFont *)chunks[i].ptr, pos);
++		} else if (dos && pos == 0) { // Not present in the DOS executable
++			*chunks[i].ptr = (uint8 *)calloc(chunks[i].size, 1);
+ 		} else {
+ 			*chunks[i].ptr = (uint8 *)malloc(chunks[i].size);
+-			exe.seek(chunks[i].offset - offset);
++			exe.seek(pos);
+ 			exe.read(*chunks[i].ptr, chunks[i].size);
+ 		}
+ 	}
+-- 
+2.47.3
+

@@ -1,0 +1,194 @@
+--- a/mod298.asm
++++ b/mod298.asm
+@@ -418,7 +418,7 @@
+    1685  .data ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+    1701  .data ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+    1717  .data ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+-   1733  .data ff ff ff ff ff ff ff 2a 01 15 00 ff ff ff ff ff
++   1733  .data ff ff ff ff ff ff ff 2a 01 @globoColpito ff ff ff ff ff   ; C1: onAcceptStrike del Globo -> versione nuova
+    1749  .data ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+    1765  .data ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+    1781  .data ff ff ff ff ff 15 00 ff ff 16 00 ff ff 17 00 ff
+@@ -440,7 +440,7 @@
+    2037  .data ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+    2053  .data ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+    2069  .data ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+-   2085  .data ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
++   2085  .data ff ff ff ff ff 2a 01 @cuoreColpito ff ff ff ff ff ff ff   ; C3: onAcceptStrike del cuore di Roska
+    2101  .data ff ff ff ff ff ff ff ff ff 2a 01 33 01 ff ff ff
+    2117  .data ff ff ff ff ff 2a 01 f2 00 2a 01 1c 01 ff ff ff
+    2133  .data ff ff ff 15 00 ff ff 16 00 ff ff 17 00 ff ff 18
+@@ -531,7 +531,7 @@
+    3493  .data ff 09 00 ff ff 0a 00 ff ff 0b 00 ff ff 0c 00 ff
+    3509  .data ff 0d 00 ff ff 0e 00 ff ff 0f 00 ff ff 10 00 ff
+    3525  .data ff 11 00 ff ff 12 00 ff ff 13 00 ff ff 14 00 2a
+-   3541  .data 01 d4 04 ff ff ff ff ff ff ff ff ff ff ff ff ff
++   3541  .data 01 @strumentoUsato ff ff ff ff ff ff ff ff ff ff ff ff ff   ; C4: onUse degli strumenti -> versione nuova
+    3557  .data ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+    3573  .data ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+    3589  .data ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+@@ -615,3 +615,164 @@
+    4837  .data 00 ff ff 38 00 ff ff 39 00 ff ff 3a 00 ff ff 3b
+    4853  .data 00
+ 
++; ============================================================================
++; RESTAURO (fase 5). Codice nuovo in coda al modulo.
++; ============================================================================
++
++; C1: il Celestial Orb colpito non si trasforma più nella Brass Key (si perdeva un pezzo della
++; Regalia). Crea invece una Brass Key nuova nel punto in cui si trova il Globo, poi fa comparire
++; gli scheletri come l'originale (298:21). Il Globo passa allo script generico 713, quindi
++; colpirlo di nuovo non ha altri effetti.
++          .func onAcceptStrike
++@globoColpito:
++          enter          8                 ; stack[-2] Globo, [-4] [-6] scheletri, [-8] chiave
++          zero
++          putint_v       stack[-6]
++          zero
++          putint_v       stack[-4]
++          call_member    0 0 this[0]
++          putint_v       stack[-2]
++          zero
++          zero
++          constint       427               ; Brass Key
++          ccall          3 scriptMakeObject
++          putint_v       stack[-8]
++          getint         stack[-8]
++          zero
++          ne
++          jmp_false_v    @gSenzaChiave
++          constint       21                ; codice della serratura, come nell'originale
++          call_member_v  1 81 deref[stack[-8] -> GameObject:0]   ; scriptGameObjectSetExtra
++          getint         this[8]
++          getint         this[6]
++          getint         this[4]
++          getint         this[12]
++          call_member_v  4 5 deref[stack[-8] -> GameObject:0]    ; scriptActorTransfer
++@gSenzaChiave:
++          constint       713
++          call_member_v  1 13 deref[stack[-2] -> GameObject:0]   ; scriptActorSetScript
++          strlit         #0                                       ; 'CBT:6'
++          ccall_v        1 scriptPlaySound
++          constint       136
++          constint       11581
++          constint       21401
++          getint         this[12]
++          call_far       4 176:24697
++          putint_v       stack[-6]
++          getint         stack[-6]
++          zero
++          ne
++          jmp_false_v    @gSecondo
++          constint       136
++          constint       11581
++          constint       21401
++          constint       -4095
++          call_member_v  4 5 deref[stack[-6] -> GameObject:0]    ; scriptActorTransfer
++          one
++          call_member_v  1 90 deref[stack[-6] -> GameObject:0]
++@gSecondo:
++          constint       136
++          constint       11582
++          constint       21466
++          getint         this[12]
++          call_far       4 176:24802
++          putint_v       stack[-4]
++          getint         stack[-4]
++          zero
++          ne
++          jmp_false_v    @gFine
++          constint       136
++          constint       11582
++          constint       21466
++          constint       -4095
++          call_member_v  4 5 deref[stack[-4] -> GameObject:0]    ; scriptActorTransfer
++          one
++          call_member_v  1 90 deref[stack[-4] -> GameObject:0]
++@gFine:
++          constint       2
++          return
++
++; C4: gli strumenti suonano come prima (298:1236). Se è un flauto (prototipi 378, 357, 115) ed è
++; suonato vicino a una delle quattro tane di Padavis, i topi seguono la musica e se ne vanno:
++; i quattro generatori di topi di Padavis (oggetti 4249-4252) vengono eliminati, una volta sola.
++          .func onUse
++@strumentoUsato:
++          enter          2
++          getint         stack[10]         ; this (indice), argomento nascosto dei metodi
++          getint         stack[8]          ; this (segmento)
++          call_near      2 1236            ; suono dello strumento (funzione originale)
++          putint_v       stack[-2]
++          getint         data[5010]
++          jmp_true_v     @sFine
++          call_member    0 9 this[0]       ; scriptActorGetProto
++          putint_v       stack[-2]
++          getint         stack[-2]
++          constint       378
++          eq
++          getint         stack[-2]
++          constint       357
++          eq
++          lor
++          getint         stack[-2]
++          constint       115
++          eq
++          lor
++          jmp_false_v    @sFine
++          constint       160
++          call_member    1 71 array[GameObject:4249:0]   ; scriptGameObjectCanSenseProtaganist
++          constint       160
++          call_member    1 71 array[GameObject:4250:0]
++          lor
++          constint       160
++          call_member    1 71 array[GameObject:4251:0]
++          lor
++          constint       160
++          call_member    1 71 array[GameObject:4252:0]
++          lor
++          jmp_false_v    @sFine
++          one
++          putint_v       data[5010]
++          constint       4249
++          ccall_v        1 scriptDeleteObject
++          constint       4250
++          ccall_v        1 scriptDeleteObject
++          constint       4251
++          ccall_v        1 scriptDeleteObject
++          constint       4252
++          ccall_v        1 scriptDeleteObject
++          strlit         "The rats creep out of their holes, drawn by the melody, and follow the tune away into the dark. Padavis is free of them."
++          ccall_v        1 scriptStatus
++@sFine:
++          one
++          return
++
++; C3 (fase 5, proposta 3): il cuore di Roska (oggetto 431, classe 1143). Il cuore batte solo
++; finché Roska (attore 32947) è vivo: lo decide già la sua onActivate (298:242). Finché Roska
++; vive, colpirlo non serve a nulla; dopo la sua morte il cuore si spezza, una volta sola, e la
++; terra di Karminac è liberata (data[5020]).
++          .func onAcceptStrike
++@cuoreColpito:
++          enter          0
++          call_member    0 95 array[GameObject:32947:0]   ; scriptActorGetVitality di Roska
++          zero
++          gt
++          jmp_false_v    @cRoskaMorto
++          strlit         "The heart pounds with a power that no blow can harm while Roska lives."
++          ccall_v        1 scriptStatus
++          one
++          return
++@cRoskaMorto:
++          getint         data[5020]
++          jmp_true_v     @cFine
++          one
++          putint_v       data[5020]
++          strlit         #7                ; 'SPL:4'
++          ccall_v        1 scriptPlaySound
++          strlit         "The golden heart of Roska cracks and crumbles into black dust. The land of Karminac draws its first free breath."
++          ccall_v        1 scriptStatus
++          call_member    0 0 this[0]
++          ccall_v        1 scriptDeleteObject
++@cFine:
++          one
++          return
++

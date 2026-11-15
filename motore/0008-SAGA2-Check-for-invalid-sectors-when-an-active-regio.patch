@@ -1,0 +1,28 @@
+From b09eab957a0de26ec19d64cc6f1bc469133748a0 Mon Sep 17 00:00:00 2001
+From: Indr1d-C0ld <102763446+Indr1d-C0ld@users.noreply.github.com>
+Date: Mon, 16 Nov 2026 00:26:01 +0100
+Subject: [PATCH 08/14] SAGA2: Check for invalid sectors when an active region
+ changes world
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ engines/saga2/objects.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/engines/saga2/objects.cpp b/engines/saga2/objects.cpp
+index 98cf143a..5f8d3fa9 100644
+--- a/engines/saga2/objects.cpp
++++ b/engines/saga2/objects.cpp
+@@ -3207,7 +3207,8 @@ void ActiveRegion::update() {
+ 		//  Deactivate all of the old sectors
+ 		for (u = _region.min.u; u < _region.max.u; u++) {
+ 			for (v = _region.min.v; v < _region.max.v; v++) {
+-				world->getSector(u, v)->deactivate();
++				if (Sector *sect = world->getSector(u, v))
++					sect->deactivate();
+ 			}
+ 		}
+ 
+-- 
+2.47.3
+

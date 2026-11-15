@@ -1,0 +1,38 @@
+From 4a407db5bba7171f2f3de3e4772072cfae8d9219 Mon Sep 17 00:00:00 2001
+From: Indr1d-C0ld <102763446+Indr1d-C0ld@users.noreply.github.com>
+Date: Mon, 16 Nov 2026 00:26:02 +0100
+Subject: [PATCH 14/14] SAGA2: Return nothing when iterating an empty sector
+ region
+
+RegionalObjectIterator clamps its sector range to the world, so a search
+outside the map gives an empty range. first() still read the sector at
+the minimum coordinates, which getSector() maps to an unrelated sector,
+and could return its objects; the following next() then failed its
+range assertion.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ engines/saga2/objects.cpp | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/engines/saga2/objects.cpp b/engines/saga2/objects.cpp
+index f255de20..2f9bc8b2 100644
+--- a/engines/saga2/objects.cpp
++++ b/engines/saga2/objects.cpp
+@@ -3391,6 +3391,13 @@ ObjectID SectorRegionObjectIterator::first(GameObject **obj) {
+ 
+ 	_currentObject = nullptr;
+ 
++	//  A region outside the world is clamped to an empty range: searching it
++	//  would read an unrelated sector and leave the iterator out of range.
++	if (_minSector.u >= _maxSector.u || _minSector.v >= _maxSector.v) {
++		if (obj != nullptr) *obj = nullptr;
++		return Nothing;
++	}
++
+ 	_sectorCoords = _minSector;
+ 	currentSector = _searchWorld->getSector(_sectorCoords.u, _sectorCoords.v);
+ 
+-- 
+2.47.3
+

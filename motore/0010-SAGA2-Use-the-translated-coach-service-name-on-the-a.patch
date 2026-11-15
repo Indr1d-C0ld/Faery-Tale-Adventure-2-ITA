@@ -1,0 +1,78 @@
+From 65a047b9730355c17508868eb6ab0f7ce4e44030 Mon Sep 17 00:00:00 2001
+From: Indr1d-C0ld <102763446+Indr1d-C0ld@users.noreply.github.com>
+Date: Mon, 16 Nov 2026 00:26:01 +0100
+Subject: [PATCH 10/14] SAGA2: Use the translated coach service name on the
+ automap
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ engines/saga2/mapfeatr.cpp | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/engines/saga2/mapfeatr.cpp b/engines/saga2/mapfeatr.cpp
+index 9d36b6a7..b4403315 100644
+--- a/engines/saga2/mapfeatr.cpp
++++ b/engines/saga2/mapfeatr.cpp
+@@ -66,7 +66,7 @@ void initMapFeatures() {
+ //	MAP_VILLAGE(13368,12712,"The Glass Sparrow Inn");
+ //	MAP_VILLAGE(13512,12232,"The Third Eye");
+ //	MAP_VILLAGE(12712,12008,"Caladrin's General Store");
+-	MAP_VILLAGE(12904, 12328, "Diligenze reali");
++	MAP_VILLAGE(12904, 12328, "Servizio Reale Diligenze");
+ //	MAP_VILLAGE(13252,12520,"Horse Statue");
+ 
+ 	MAP_CAVE(10296, 9176, "Grotta");      //  Sorcerer's Lair
+@@ -79,7 +79,7 @@ void initMapFeatures() {
+ 	//Hatak
+ 	MAP_VILLAGE(5096, 4351, "Gleng'l Zur");     //  Front
+ //	MAP_VILLAGE(4842,3839,"Hatak Arena");
+-	MAP_VILLAGE(8208, 3120, "Diligenze reali");
++	MAP_VILLAGE(8208, 3120, "Servizio Reale Diligenze");
+ 
+ 	//Karminac
+ 	//  Darnoc
+@@ -99,7 +99,7 @@ void initMapFeatures() {
+ //	MAP_VILLAGE(13805,19523,"Palace");
+ //	MAP_VILLAGE(13430,19120,"Weapon Exchange");
+ //	MAP_VILLAGE(13380,19190,"Pawn Shop");
+-	MAP_VILLAGE(13240, 18104, "Diligenze reali");
++	MAP_VILLAGE(13240, 18104, "Servizio Reale Diligenze");
+ 
+ 	//Roska's Citadel
+ 	MAP_VILLAGE(12550, 23096, "Cittadella di Roska");
+@@ -108,7 +108,7 @@ void initMapFeatures() {
+ 	MAP_VILLAGE(21608, 11512, "Bilton");
+ //	MAP_VILLAGE(21120,10156,"Bilton main gate");
+ //	MAP_VILLAGE(21760,10284,"Bilton Slaughter Yard");
+-	MAP_VILLAGE(22217, 11365, "Diligenze reali");
++	MAP_VILLAGE(22217, 11365, "Servizio Reale Diligenze");
+ //	MAP_VILLAGE(22424,11269,"Orsolo's Cupboard");
+ //	MAP_VILLAGE(22616,11016,"Alchemist Hollow");
+ //	MAP_VILLAGE(22394,10703,"Weapon Shack");
+@@ -139,7 +139,7 @@ void initMapFeatures() {
+ //	MAP_VILLAGE(3660,12332,"Healer's corner");
+ //	MAP_VILLAGE(4008,11944,"Mage corner");
+ //	MAP_VILLAGE(4024,11752,"Weaver");
+-	MAP_VILLAGE(4752, 10544, "Diligenze reali");
++	MAP_VILLAGE(4752, 10544, "Servizio Reale Diligenze");
+ 
+ 	//Maldavith
+ 	MAP_VILLAGE(6520, 17176, "Maldavith");
+@@ -163,12 +163,12 @@ void initMapFeatures() {
+ 	MAP_VILLAGE(5035, 19002, "Rovine di Tamnath");
+ 
+ 	//Mons
+-	MAP_VILLAGE(20496, 17456, "Diligenze reali");
++	MAP_VILLAGE(20496, 17456, "Servizio Reale Diligenze");
+ 
+ 	//Aroblin
+ 	MAP_VILLAGE(14152, 4360, "Castello d'Ambra");
+ //	MAP_CAVE(14920,4952,"Dwarven Mine");
+-	MAP_VILLAGE(12560, 1968, "Diligenze reali");
++	MAP_VILLAGE(12560, 1968, "Servizio Reale Diligenze");
+ 
+ 	//STARGATES
+ 	MAP_STARGATE(14792, 12856,   "Obelischi");   // Wildevarr Stargate 1
+-- 
+2.47.3
+

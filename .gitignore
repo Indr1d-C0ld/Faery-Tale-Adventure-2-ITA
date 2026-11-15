@@ -1,0 +1,27 @@
+# Lista bianca: si pubblica solo il lavoro del restauro, mai file del gioco originale
+# (original/, pre_assets/, gioco/, build/, estratti/, prove/ e i documenti d'epoca in docs/
+# restano locali). Per aggiungere un percorso, aggiungerlo qui sotto con "!".
+/*
+!/.gitignore
+!/README.md
+!/LICENSE
+!/CATALOGO.md
+!/PIANO.md
+!/PROPOSTE_QUEST.md
+!/gioca.sh
+!/tools/
+!/patch/
+!/traduzione/
+!/motore/
+!/distribuzione/
+!/immagini/
+
+__pycache__/
+/tools/shn/shn2wav
+# copie di lavoro dei listati: si pubblicano solo le differenze .diff
+/patch/script/*.asm
+# file della traduzione che contengono il testo inglese originale del gioco
+/traduzione/testi.tsv
+/traduzione/nomi.tsv
+/traduzione/blocchi/
+/traduzione/scarti.tsv

@@ -1,0 +1,28 @@
+--- a/mod194.asm
++++ b/mod194.asm
+@@ -558,7 +558,7 @@
+    2416  return
+ 
+    2417  .func sayNumber
+-   2427  enter          4
++   2427  jmp            @numeroInCifre   ; RESTAURO: vedi in coda al modulo
+    2430  getint         stack[14]
+    2434  constint       999
+    2437  gt
+@@ -995,3 +995,16 @@
+    4351  return_v
+    4352  .data 03 00 c2 00 13 00 c2 00 37 01 c2 00 7b 09
+ 
++; ============================================================================
++; RESTAURO (fase 6, traduzione): sayNumber compone i prezzi parlati a pezzi ("twenty " "one "...),
++; ognuno con la sua voce inglese. In italiano la composizione a pezzi non funziona ("uno mila"),
++; quindi il numero si scrive in cifre all'inizio e i pezzi restano come sola voce, con testo
++; vuoto (traduzione "<vuota>" in traduzione/testi.tsv).
++; ============================================================================
++@numeroInCifre:
++          enter          4
++          getint         stack[14]
++          strlit         "%d "
++          call_member_v  2 49 deref[stack[12] -> GameObject:0]   ; scriptActorSayText
++          jmp            2430
++

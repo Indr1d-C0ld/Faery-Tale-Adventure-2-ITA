@@ -1,0 +1,5 @@
+# archivio	gruppo	voce	offset	byte originali	byte nuovi	voce del catalogo e motivo
+fta.hrs	LIST	PRO\1	8728	8802	ffff	A4: prototipo 101 (Rallo Jovanc, usato solo da lui) immune a tutti i danni, così non muore negli scontri con gli scheletri e la quest dell'orsacchiotto resta completabile
+fta.hrs	LIST	ACTO	7838	0d00	2407	C1: Brythe (attore 86) usa la classe nuova 1828, che reagisce ai pezzi della Regalia
+fta.hrs	LIST	ACTO	376	0e00	2507	C4: One-eyed Wort (attore 4) usa la classe nuova 1829, che paga quando i topi di Padavis sono scacciati
+fta.hrs	LIST	OBJE	33720	0000	0400	C1: il Celestial Orb diventa importante (kObjectImportant), così non si perde

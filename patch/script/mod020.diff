@@ -1,0 +1,494 @@
+--- a/mod020.asm
++++ b/mod020.asm
+@@ -3435,3 +3435,491 @@
+   25994  .data ff ff f4 00 c6 01 ff ff ff ff ff ff 6d 00 ff ff
+   26010  .data 6e 00 ff ff 6f 00
+ 
++; ============================================================================
++; RESTAURO (fase 5): quest della Regalia di Pentere e ricompensa dei topi di Padavis.
++; Tutto il codice nuovo è in coda al modulo: nessun offset originale si sposta.
++; Globali nuove nel segmento dati (zona 4854-5099 mai usata dagli script originali):
++;   data[5000] Globo consegnato, data[5002] Corona, data[5004] Scettro, data[5006] Regalia completa
++;   data[5010] topi di Padavis scacciati (flauto, mod298), data[5012] Wort ha pagato
++; Prototipi nuovi: 970 Crown of Pentere, 971 Scepter of Pentere (patch/prototipi.tsv).
++; ============================================================================
++
++; Brythe (attore 32854, classe nuova: export 1828) -------------------------------
++          .func onReceive
++@brytheReceive:
++          enter          4                 ; stack[-2] prototipo ricevuto, stack[-4] battuta
++          call_member    0 9 deref[thread[6] -> GameObject:0]   ; scriptActorGetProto
++          putint_v       stack[-2]
++          getint         stack[-2]
++          constint       168               ; Celestial Orb
++          eq
++          jmp_false_v    @bCorona
++          one
++          putint_v       data[5000]
++          strlit         "The Celestial Orb... I have seen it before, long ago, in my father's hands. How strange that I should remember it so clearly."
++          putint_v       stack[-4]
++          jmp            @bPezzo
++@bCorona:
++          getint         stack[-2]
++          constint       970               ; Crown of Pentere
++          eq
++          jmp_false_v    @bScettro
++          one
++          putint_v       data[5002]
++          strlit         "The Crown of Pentere! The ogres who slew my mother took it as a trophy... You have brought it back from the dark."
++          putint_v       stack[-4]
++          jmp            @bPezzo
++@bScettro:
++          getint         stack[-2]
++          constint       971               ; Scepter of Pentere
++          eq
++          jmp_false_v    @bAltro
++          one
++          putint_v       data[5004]
++          strlit         "The Scepter of Pentere. My father let me hold it once, when I was very small. It is warm, as if it knew me."
++          putint_v       stack[-4]
++@bPezzo:
++          getint         thread[6]
++          ccall_v        1 scriptDeleteObject
++          getint         data[5000]
++          getint         data[5002]
++          land
++          getint         data[5004]
++          land
++          jmp_true_v     @bCompleta
++          strlit         " The Regalia of King Kiger is made of three pieces. Bring me the others, and Pentere shall know the truth."
++          zero
++          getint         stack[-4]
++          zero
++          zero
++          call_member_v  5 48 this[0]       ; scriptActorSay
++          one
++          return
++@bCompleta:
++          one
++          putint_v       data[5006]
++          strlit         " The Crown, the Orb and the Scepter, together again... They answer to my blood. I am Brythe, daughter of Karassmus, and I will take my father's throne when Farr is whole again. Take these, and let the people know that their troubled times are passed."
++          zero
++          getint         stack[-4]
++          zero
++          zero
++          call_member_v  5 48 this[0]       ; scriptActorSay
++          strlit         "The Regalia has proven Brythe heir to the throne of Pentere."
++          ccall_v        1 scriptStatus
++          constint       496               ; Declaration of New Sovereign (libro 496)
++          getint         stack[10]
++          getint         stack[8]
++          call_near      3 @dono_libro
++          putint_v       stack[-2]
++          constint       497               ; Royal Decree (libro 497)
++          getint         stack[10]
++          getint         stack[8]
++          call_near      3 @dono_libro
++          putint_v       stack[-2]
++          constint       500               ; 500 monete d'oro
++          getint         stack[10]
++          getint         stack[8]
++          call_near      3 @dono_oro
++          putint_v       stack[-2]
++          one
++          return
++@bAltro:
++          getint         stack[10]          ; this (indice), argomento nascosto dei metodi
++          getint         stack[8]           ; this (segmento)
++          call_far       2 20:390           ; onReceive generico delle persone
++          return
++
++; Wort (attore 32772, classe nuova: export 1829) ----------------------------------
++          .func onTalkTo
++@wortTalk:
++          enter          2
++          getint         data[5010]
++          jmp_false_v    @wGenerico
++          getint         data[5012]
++          jmp_true_v     @wGenerico
++          one
++          putint_v       data[5012]
++          strlit         "You did it! Not a single rat left in my granary, and the holes have gone quiet. The council promised a reward to whoever got rid of the vermin. Here, you've earned every coin."
++          zero
++          zero
++          call_member_v  3 48 this[0]       ; scriptActorSay
++          constint       150
++          getint         stack[10]
++          getint         stack[8]
++          call_near      3 @dono_oro
++          putint_v       stack[-2]
++          return_v
++@wGenerico:
++          getint         stack[10]          ; this (indice)
++          getint         stack[8]           ; this (segmento)
++          call_far       2 244:424          ; onTalkTo generico
++          return_v
++
++; Funzioni di servizio -------------------------------------------------------------
++; dono_libro(this, n): crea una pergamena col testo n e la dà a chi ha interagito (thread[4]).
++; I metodi ricevono this come primi due argomenti (stack[8] segmento, stack[10] indice): chi
++; chiama con call_near deve spingerli, altrimenti this[...] legge dati sbagliati.
++          .func dono_libro
++@dono_libro:
++          enter          2
++          zero
++          zero
++          constint       650               ; Scroll
++          ccall          3 scriptMakeObject
++          putint_v       stack[-2]
++          getint         stack[-2]
++          zero
++          ne
++          jmp_false_v    @dlFine
++          getint         stack[12]          ; n
++          call_member_v  1 81 deref[stack[-2] -> GameObject:0]   ; scriptGameObjectSetExtra
++          getint         thread[4]
++          call_member    0 0 this[0]
++          call_member_v  2 18 deref[stack[-2] -> GameObject:0]   ; scriptGameObjectDropOn
++@dlFine:
++          one
++          return
++
++; dono_oro(this, n): crea n monete d'oro e le dà a chi ha interagito (thread[4]).
++          .func dono_oro
++@dono_oro:
++          enter          2
++          zero
++          zero
++          constint       354               ; Gold Coin
++          ccall          3 scriptMakeObject
++          putint_v       stack[-2]
++          getint         stack[-2]
++          zero
++          ne
++          jmp_false_v    @doFine
++          getint         stack[12]          ; n
++          call_member_v  1 81 deref[stack[-2] -> GameObject:0]   ; scriptGameObjectSetExtra
++          getint         stack[12]          ; quantità
++          getint         thread[4]
++          call_member    0 0 this[0]
++          call_member_v  3 19 deref[stack[-2] -> GameObject:0]   ; scriptGameObjectDropMergeableOn
++@doFine:
++          one
++          return
++
++; Classi nuove: copie delle vtable originali con un metodo cambiato ------------------
++; Brythe: copia della classe 13 (export 13, 20:10852), slot 137 onReceive -> @brytheReceive
++          .word 156
++@classeBrythe:
++          .word 65535 0
++          .word 65535 1
++          .word 65535 2
++          .word 65535 3
++          .word 65535 4
++          .word 65535 5
++          .word 65535 6
++          .word 65535 7
++          .word 65535 8
++          .word 65535 9
++          .word 65535 10
++          .word 65535 11
++          .word 65535 12
++          .word 65535 13
++          .word 65535 14
++          .word 65535 15
++          .word 65535 16
++          .word 65535 17
++          .word 65535 18
++          .word 65535 19
++          .word 65535 20
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 20 57
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 20 3542
++          .word 65535 65535
++          .word 20 3483
++          .word 20 3357
++          .word 20 3420
++          .word 20 324
++          .word 65535 21
++          .word 65535 22
++          .word 65535 23
++          .word 65535 24
++          .word 65535 25
++          .word 65535 26
++          .word 65535 27
++          .word 65535 28
++          .word 65535 29
++          .word 65535 30
++          .word 65535 31
++          .word 65535 32
++          .word 65535 33
++          .word 65535 34
++          .word 65535 35
++          .word 65535 36
++          .word 65535 37
++          .word 65535 38
++          .word 65535 39
++          .word 65535 40
++          .word 65535 41
++          .word 65535 42
++          .word 65535 43
++          .word 65535 44
++          .word 65535 45
++          .word 65535 46
++          .word 65535 47
++          .word 65535 48
++          .word 65535 49
++          .word 65535 50
++          .word 65535 51
++          .word 65535 52
++          .word 65535 53
++          .word 65535 54
++          .word 65535 55
++          .word 65535 56
++          .word 65535 57
++          .word 65535 58
++          .word 65535 59
++          .word 65535 60
++          .word 65535 61
++          .word 65535 62
++          .word 65535 63
++          .word 65535 64
++          .word 65535 65
++          .word 65535 66
++          .word 65535 67
++          .word 65535 68
++          .word 65535 69
++          .word 65535 70
++          .word 65535 71
++          .word 65535 72
++          .word 65535 73
++          .word 65535 74
++          .word 65535 75
++          .word 65535 76
++          .word 65535 77
++          .word 65535 78
++          .word 65535 79
++          .word 65535 80
++          .word 65535 81
++          .word 65535 82
++          .word 65535 83
++          .word 65535 84
++          .word 65535 85
++          .word 65535 86
++          .word 65535 87
++          .word 65535 88
++          .word 65535 89
++          .word 65535 90
++          .word 65535 91
++          .word 65535 92
++          .word 65535 93
++          .word 65535 94
++          .word 65535 95
++          .word 65535 96
++          .word 65535 97
++          .word 65535 98
++          .word 65535 99
++          .word 65535 100
++          .word 65535 101
++          .word 65535 102
++          .word 65535 103
++          .word 65535 104
++          .word 65535 105
++          .word 65535 106
++          .word 65535 107
++          .word 65535 108
++          .word 244 424
++          .word 20 @brytheReceive   ; slot 137: metodo nuovo
++          .word 20 3948
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 20 486
++          .word 20 4014
++          .word 244 454
++          .word 65535 65535
++          .word 65535 109
++          .word 65535 110
++          .word 65535 111
++          .word 20 4094
++          .word 20 4171
++          .word 20 4252
++          .word 20 4315
++          .word 20 4420
++          .word 20 4444
++          .word 20 4465
++; Wort: copia della classe 14 (export 14, 20:11478), slot 136 onTalkTo -> @wortTalk
++          .word 156
++@classeWort:
++          .word 65535 0
++          .word 65535 1
++          .word 65535 2
++          .word 65535 3
++          .word 65535 4
++          .word 65535 5
++          .word 65535 6
++          .word 65535 7
++          .word 65535 8
++          .word 65535 9
++          .word 65535 10
++          .word 65535 11
++          .word 65535 12
++          .word 65535 13
++          .word 65535 14
++          .word 65535 15
++          .word 65535 16
++          .word 65535 17
++          .word 65535 18
++          .word 65535 19
++          .word 65535 20
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 20 57
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 20 3542
++          .word 65535 65535
++          .word 20 3483
++          .word 20 3357
++          .word 20 3420
++          .word 20 324
++          .word 65535 21
++          .word 65535 22
++          .word 65535 23
++          .word 65535 24
++          .word 65535 25
++          .word 65535 26
++          .word 65535 27
++          .word 65535 28
++          .word 65535 29
++          .word 65535 30
++          .word 65535 31
++          .word 65535 32
++          .word 65535 33
++          .word 65535 34
++          .word 65535 35
++          .word 65535 36
++          .word 65535 37
++          .word 65535 38
++          .word 65535 39
++          .word 65535 40
++          .word 65535 41
++          .word 65535 42
++          .word 65535 43
++          .word 65535 44
++          .word 65535 45
++          .word 65535 46
++          .word 65535 47
++          .word 65535 48
++          .word 65535 49
++          .word 65535 50
++          .word 65535 51
++          .word 65535 52
++          .word 65535 53
++          .word 65535 54
++          .word 65535 55
++          .word 65535 56
++          .word 65535 57
++          .word 65535 58
++          .word 65535 59
++          .word 65535 60
++          .word 65535 61
++          .word 65535 62
++          .word 65535 63
++          .word 65535 64
++          .word 65535 65
++          .word 65535 66
++          .word 65535 67
++          .word 65535 68
++          .word 65535 69
++          .word 65535 70
++          .word 65535 71
++          .word 65535 72
++          .word 65535 73
++          .word 65535 74
++          .word 65535 75
++          .word 65535 76
++          .word 65535 77
++          .word 65535 78
++          .word 65535 79
++          .word 65535 80
++          .word 65535 81
++          .word 65535 82
++          .word 65535 83
++          .word 65535 84
++          .word 65535 85
++          .word 65535 86
++          .word 65535 87
++          .word 65535 88
++          .word 65535 89
++          .word 65535 90
++          .word 65535 91
++          .word 65535 92
++          .word 65535 93
++          .word 65535 94
++          .word 65535 95
++          .word 65535 96
++          .word 65535 97
++          .word 65535 98
++          .word 65535 99
++          .word 65535 100
++          .word 65535 101
++          .word 65535 102
++          .word 65535 103
++          .word 65535 104
++          .word 65535 105
++          .word 65535 106
++          .word 65535 107
++          .word 65535 108
++          .word 20 @wortTalk   ; slot 136: metodo nuovo
++          .word 20 390
++          .word 20 3948
++          .word 65535 65535
++          .word 65535 65535
++          .word 65535 65535
++          .word 20 486
++          .word 20 4014
++          .word 244 454
++          .word 65535 65535
++          .word 65535 109
++          .word 65535 110
++          .word 65535 111
++          .word 20 4094
++          .word 20 4171
++          .word 20 4252
++          .word 20 4315
++          .word 20 4491
++          .word 20 4515
++          .word 20 4536
++

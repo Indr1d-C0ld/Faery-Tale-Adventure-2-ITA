@@ -1,0 +1,56 @@
+FAERY TALE ADVENTURE II: HALLS OF THE DEAD - RESTAURO ITALIANO @VERSIONE@
+===========================================================================
+
+Restauro non ufficiale della versione DOS del gioco (1997), con bug corretti,
+quest completate e traduzione italiana completa dei testi. Funziona con una
+versione modificata di ScummVM, inclusa.
+
+IL GIOCO NON E' INCLUSO. Serve la tua copia originale della versione DOS.
+
+
+COSA CONTIENE
+-------------
+- Correzioni di bug del gioco e del motore. Fra queste: Capitan Navis che non
+  porta a Tamnath anche dopo la morte di Muybridge, l'incantesimo Timequake,
+  i crash nelle Sale dei Morti, quello del mana sopra 255, i forzieri che si
+  svuotano e i salvataggi che non si caricano.
+- Quest completate a partire dai contenuti lasciati nel gioco:
+  la Regalia di Pentere e la principessa Brythe, il flauto e i topi di Padavis,
+  il cuore di Roska. In piu' ci sono gli insulti di Krogatt in combattimento.
+- Traduzione italiana di tutti i testi: dialoghi, libri, nomi e interfaccia.
+  Le voci restano in inglese, con i sottotitoli in italiano.
+
+
+REQUISITI
+---------
+- Linux a 64 bit (x86_64), con le librerie SDL2, libpng e zlib (di solito sono
+  gia' installate; su Debian e Ubuntu: sudo apt install libsdl2-2.0-0)
+- Python 3
+- La versione DOS originale del gioco: FTA2.EXE, FTA.HRS, FTADATA.HRS,
+  FTAIMAGE.HRS, FTASOUND.HRS, FTAVOICE.HRS, SCRIPTS.HRS e la cartella DRIVERS
+
+
+INSTALLAZIONE
+-------------
+  ./installa.sh /percorso/della/cartella/FTA2
+
+La cartella originale non viene modificata. I file vengono copiati in gioco/ e
+gli archivi FTA.HRS e SCRIPTS.HRS vengono ricostruiti col restauro.
+
+
+GIOCARE
+-------
+  ./gioca.sh
+
+Le nuove quest e le correzioni ai personaggi richiedono una PARTITA NUOVA:
+i salvataggi precedenti conservano gli oggetti e i personaggi di prima.
+
+
+LICENZA E SORGENTI
+------------------
+Il motore (ScummVM modificato), gli strumenti, le patch e la traduzione sono
+distribuiti con licenza GNU GPL versione 3 (file LICENSE). I sorgenti
+completi, comprese le modifiche a ScummVM, sono nel repository del progetto:
+https://github.com/Indr1d-C0ld/faery-tale-adventure-2-ita
+Faery Tale Adventure II e' (c) The Wyrmkeep Entertainment Co. Questo progetto
+non e' affiliato ne' approvato dai titolari dei diritti.

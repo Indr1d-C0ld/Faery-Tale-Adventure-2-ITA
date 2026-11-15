@@ -1,0 +1,18 @@
+--- a/mod137.asm
++++ b/mod137.asm
+@@ -728,3 +728,15 @@
+    2735  ccall_v        1 scriptAppendBookText@36
+    2739  return_v
+ 
++; ============================================================================
++; RESTAURO (fase 5, C1): nota a margine in fondo alla pergamena della Regalia (libro 495).
++; L'export 495 punta qui; il testo originale (137:1390) resta invariato e viene richiamato.
++; ============================================================================
++          .func ScrollRegaliaTextNota
++@regaliaConNota:
++          enter          0
++          call_near      0 1390
++          strlit         "Added below, in a different and hurried hand:\n\nThe King's daughter did not die with her mother. A girl of her age was taken in by the healers of the countryside, and the Lady Brythe has her father's eyes. Should the Regalia ever be made whole again, let it be brought to her.\n\n"
++          ccall_v        1 scriptAppendBookText@38
++          return_v
++

@@ -1,0 +1,56 @@
+From 551a945438c8fd60ae1f0d8f91e113d836a1d781 Mon Sep 17 00:00:00 2001
+From: Indr1d-C0ld <102763446+Indr1d-C0ld@users.noreply.github.com>
+Date: Mon, 16 Nov 2026 00:26:01 +0100
+Subject: [PATCH 07/14] SAGA2: Only read low spell IDs as objects when they are
+ skills
+
+skillProtoFromID() took any ID up to MAX_SPELLS as an object ID first and
+cast that object's prototype to SkillProto. When the prototype was not a
+skill but its lock type happened to name a mana spell, the wrong
+prototype was returned and the spell cast called through an invalid
+vtable entry. Monsters casting spells by number (spell 36 in the Halls of
+the Dead) crashed the game this way, matching the old reports of random
+crashes in the underworld.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ engines/saga2/magic.cpp | 22 ++++++++++++++--------
+ 1 file changed, 14 insertions(+), 8 deletions(-)
+
+diff --git a/engines/saga2/magic.cpp b/engines/saga2/magic.cpp
+index 0b7a319e..f01761d8 100644
+--- a/engines/saga2/magic.cpp
++++ b/engines/saga2/magic.cpp
+@@ -93,15 +93,21 @@ GameObject *GetOwner(GameObject *go) {
+ // This call looks up a spells object prototype. It can accept either
+ //   an object ID or a spell ID
+ SkillProto *skillProtoFromID(int16 spellOrObjectID) {
+-	SkillProto *sProto = (SkillProto *)GameObject::protoAddress(spellOrObjectID);
+ 	if (spellOrObjectID > MAX_SPELLS)
+-		return sProto;
+-
+-	// Can be spellId, check if this the prototype returned by spellOrObjectID refers to a spell
+-	int16 manaColor = spellBook[sProto->getSpellID()].getManaType();
+-	int16 manaCost  = spellBook[sProto->getSpellID()].getManaAmt();
+-	if (manaColor >= ksManaIDRed &&  manaColor <= ksManaIDViolet &&  manaCost > 0) // A spell
+-		return sProto;
++		return (SkillProto *)GameObject::protoAddress(spellOrObjectID);
++
++	//  Low numbers are normally spell IDs, but they can also be the ID of a
++	//  spell object. Only read them as an object if that object really is a
++	//  skill: any other prototype is not a SkillProto, and casting it
++	//  crashed the game when monsters cast spells (e.g. in the underworld).
++	ProtoObj *proto = GameObject::protoAddress(spellOrObjectID);
++	if (proto != nullptr && (proto->containmentSet() & ProtoObj::kIsSkill)) {
++		SkillProto *sProto = (SkillProto *)proto;
++		int16 manaColor = spellBook[sProto->getSpellID()].getManaType();
++		int16 manaCost  = spellBook[sProto->getSpellID()].getManaAmt();
++		if (manaColor >= ksManaIDRed &&  manaColor <= ksManaIDViolet &&  manaCost > 0) // A spell
++			return sProto;
++	}
+ 
+ 	if (spellOrObjectID >= kTotalSpellBookPages)
+ 		error("Wrong spellID: %d > %d", spellOrObjectID, kTotalSpellBookPages);
+-- 
+2.47.3
+

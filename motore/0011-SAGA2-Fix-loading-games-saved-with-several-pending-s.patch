@@ -1,0 +1,32 @@
+From 8389e45a80561e2693f82845e4151c431428b544 Mon Sep 17 00:00:00 2001
+From: Indr1d-C0ld <102763446+Indr1d-C0ld@users.noreply.github.com>
+Date: Mon, 16 Nov 2026 00:26:01 +0100
+Subject: [PATCH 11/14] SAGA2: Fix loading games saved with several pending
+ speeches
+
+The loop restoring the speech task list incremented its counter a second
+time inside a debug message, so only half of the saved speeches were
+read and every following chunk was parsed out of place. Loading then
+failed with "Active Regions not loaded".
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ engines/saga2/speech.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/engines/saga2/speech.cpp b/engines/saga2/speech.cpp
+index 335281ec..75e667d6 100644
+--- a/engines/saga2/speech.cpp
++++ b/engines/saga2/speech.cpp
+@@ -883,7 +883,7 @@ SpeechTaskList::SpeechTaskList(Common::InSaveFile *in) {
+ 	for (int i = 0; i < count; i++) {
+ 		Speech *sp = new Speech;
+ 		assert(sp != nullptr);
+-		debugC(3, kDebugSaveload, "Loading Speech %d", i++);
++		debugC(3, kDebugSaveload, "Loading Speech %d", i);
+ 
+ 		_inactiveList.push_back(sp);
+ 		sp->read(in);
+-- 
+2.47.3
+
