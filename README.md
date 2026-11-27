@@ -125,7 +125,20 @@ FTA2_ORIGINALI=/percorso/FTA2 FTA2_USCITA=$PWD/gioco python3 -I tools/costruisci
 
 # 3. pacchetto da distribuire (facoltativo)
 tools/crea_pacchetto.sh 1.0.0
+
+# 4. versione per MS-DOS su CD (facoltativo), per esempio per Retro486
+FTA2_ORIGINALI=/percorso/FTA2 tools/crea_dos.sh
 ```
+
+**La versione per MS-DOS.** `crea_dos.sh` prepara in `build/dos/` due parti:
+- `FTA2/`, da copiare sul disco fisso (4 MB): l'eseguibile originale, i driver audio, gli archivi
+  tradotti e un `FTA2.INI` che cerca il resto in `D:\FTA2`;
+- `FTA2DATI.ISO`, un CD con immagini, suoni e voci (288 MB), scritto da `tools/crea_iso.py` senza
+  strumenti esterni.
+
+La traduzione e le correzioni negli script e nei dati valgono anche con l'eseguibile originale.
+Le correzioni al motore, invece, ci sono solo con ScummVM. È provata su un 486 DX4-100 emulato
+con 32 MB, VESA e lettore CD; l'audio è preimpostato per una Sound Blaster 16 a 220h.
 
 `gioca.sh` avvia il gioco dalla cartella del progetto. Gli strumenti di analisi (disassemblatore,
 estrattori, simulatore dell'impaginazione) sono descritti in [tools/README.md](tools/README.md).
