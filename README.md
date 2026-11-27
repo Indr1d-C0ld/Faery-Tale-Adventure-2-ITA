@@ -138,7 +138,7 @@ FTA2_ORIGINALI=/percorso/FTA2 tools/crea_dos.sh
 
 La traduzione e le correzioni negli script e nei dati valgono anche con l'eseguibile originale.
 Le correzioni al motore, invece, ci sono solo con ScummVM. È provata su un 486 DX4-100 emulato
-da [Retro486](https://github.com/Indr1d-C0ld/Retro486), il PC 486 nel browser, che la ha nella sua
+da [Retro486](https://github.com/Indr1d-C0ld/Retro486), il PC 486 nel browser, che l'ha nella sua
 libreria: 32 MB, VESA e lettore CD; l'audio è preimpostato per una Sound Blaster 16 a 220h.
 
 `gioca.sh` avvia il gioco dalla cartella del progetto. Gli strumenti di analisi (disassemblatore,
